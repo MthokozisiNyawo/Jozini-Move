@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Shop Performance Report - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-store me-2"></i>Shop Performance Report</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Date Range Filter -->
+                    <form method="GET" class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label">Period</label>
+                            <select name="period" class="form-select" onchange="this.form.submit()">
+                                <option value="daily" {% if period == 'daily' %}selected{% endif %}>Daily</option>
+                                <option value="weekly" {% if period == 'weekly' %}selected{% endif %}>Weekly</option>
+                                <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Monthly</option>
+                                <option value="yearly" {% if period == 'yearly' %}selected{% endif %}>Yearly</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">From Date</label>
+                            <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">To Date</label>
+                            <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Generate
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Top Shops Chart -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Top Performing Shops</h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="topShopsChart" height="300"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Shops Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Shop Name</th>
+                                    <th>Category</th>
+                                    <th>Orders</th>
+                                    <th>Revenue</th>
+                                    <th>Avg Order Value</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shop in shops_data %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ shop.shop_name }}</strong>
+                                    </td>
+                                    <td><span class="badge bg-info">{{ shop.category|title }}</span></td>
+                                    <td>{{ shop.orders }}</td>
+                                    <td class="fw-bold text-success">{{ format_currency(shop.revenue or 0) }}</td>
+                                    <td>{{ format_currency((shop.revenue or 0) / shop.orders if shop.orders > 0 else 0) }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.shop_detail', shop_id=shop.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-store-slash fa-3x text-muted mb-2"></i>
+                                        <p>No shop data available for this period</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-dark">
+                                <tr>
+                                    <th>Total</th>
+                                    <th></th>
+                                    <th>{{ shops_data|sum(attribute='orders') }}</th>
+                                    <th>{{ format_currency(shops_data|sum(attribute='revenue')|default(0)) }}</th>
+                                    <th>{{ format_currency((shops_data|sum(attribute='revenue')|default(0)) / (shops_data|sum(attribute='orders')) if shops_data|sum(attribute='orders') > 0 else 0) }}</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const topShops = {{ shops_data[:10]|tojson }};
+    const ctx = document.getElementById('topShopsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topShops.map(s => s.shop_name),
+            datasets: [{
+                label: 'Revenue (R)',
+                data: topShops.map(s => s.revenue || 0),
+                backgroundColor: '#0d6efd',
+                borderRadius: 5
+            }, {
+                label: 'Orders',
+                data: topShops.map(s => s.orders),
+                backgroundColor: '#198754',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Amount (R) / Orders'
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

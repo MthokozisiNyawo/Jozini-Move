@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+
+{% block title %}Help Center - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm sticky-top" style="top: 90px;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Help Topics</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="#getting-started" class="list-group-item list-group-item-action">
+                        <i class="fas fa-rocket me-2"></i>Getting Started
+                    </a>
+                    <a href="#ordering" class="list-group-item list-group-item-action">
+                        <i class="fas fa-shopping-cart me-2"></i>Placing Orders
+                    </a>
+                    <a href="#payment" class="list-group-item list-group-item-action">
+                        <i class="fas fa-credit-card me-2"></i>Payment Methods
+                    </a>
+                    <a href="#delivery" class="list-group-item list-group-item-action">
+                        <i class="fas fa-truck me-2"></i>Delivery Information
+                    </a>
+                    <a href="#returns" class="list-group-item list-group-item-action">
+                        <i class="fas fa-undo-alt me-2"></i>Cancellations & Returns
+                    </a>
+                    <a href="#account" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-circle me-2"></i>Account Management
+                    </a>
+                    <a href="#driver" class="list-group-item list-group-item-action">
+                        <i class="fas fa-motorcycle me-2"></i>For Drivers
+                    </a>
+                    <a href="#shop" class="list-group-item list-group-item-action">
+                        <i class="fas fa-store me-2"></i>For Shop Owners
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Can't find what you're looking for? <a href="{{ url_for('main.contact') }}">Contact our support team</a>
+                    </div>
+                    
+                    <!-- Getting Started -->
+                    <div id="getting-started" class="mb-5">
+                        <h3 class="border-bottom pb-2 mb-4">
+                            <i class="fas fa-rocket text-primary me-2"></i>Getting Started
+                        </h3>
+                        
+                        <div class="accordion" id="accordionGettingStarted">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                        How do I create an account?
+                                    </button>
+                                </h2>
+                                <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#accordionGettingStarted">
+                                    <div class="accordion-body">
+                                        <p>Creating an account is easy! Follow these steps:</p>
+                                        <ol>
+                                            <li>Click on the "Sign Up" button in the top right corner</li>
+                                            <li>Fill in your personal information (name, phone, email, address)</li>
+                                            <li>Choose your account type (Customer, Driver, or Shop Owner)</li>
+                                            <li>Create a secure password</li>
+                                            <li>Click "Register" and verify your email/phone</li>
+                                        </ol>
+                                        <p>Once verified, you can start using Jozini Move immediately!</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                        What are the different account types?
+                                    </button>
+                                </h2>
+                                <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#accordionGettingStarted">
+                                    <div class="accordion-body">
+                                        <ul>
+                                            <li><strong>Customer:</strong> Order food and items from local shops</li>
+                                            <li><strong>Driver:</strong> Earn money by delivering orders to customers</li>
+                                            <li><strong>Shop Owner:</strong> Register your shop and start selling online</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                        Is Jozini Move free to use?
+                                    </button>
+                                </h2>
+                                <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#accordionGettingStarted">
+                                    <div class="accordion-body">
+                                        <p>Yes! Creating an account and browsing shops is completely free. You only pay for the orders you place, which includes:</p>
+                                        <ul>
+                                            <li>Item costs (set by shops)</li>
+                                            <li>Delivery fee (based on your location)</li>
+                                            <li>Service fee (R5 per order)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Placing Orders -->
+                    <div id="ordering" class="mb-5">
+                        <h3 class="border-bottom pb-2 mb-4">
+                            <i class="fas fa-shopping-cart text-primary me-2"></i>Placing Orders
+                        </h3>
+                        
+                        <div class="accordion" id="accordionOrdering">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
+                                        How do I place an order?
+                                    </button>
+                                </h2>
+                                <div id="collapse4" class="accordion-collapse collapse show" data-bs-parent="#accordionOrdering">
+                                    <div class="accordion-body">
+                                        <ol>
+                                            <li>Browse shops and select items you want</li>
+                                            <li>Add items to your cart</li>
+                                            <li>Review your cart and proceed to checkout</li>
+                                            <li>Enter your delivery address and choose payment method</li>
+                                            <li>Confirm your order</li>
+                                            <li>Track your order in real-time!</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5">
+                                        Can I modify or cancel my order?
+                                    </button>
+                                </h2>
+                                <div id="collapse5" class="accordion-collapse collapse" data-bs-parent="#accordionOrdering">
+                                    <div class="accordion-body">
+                                        <p>You can cancel your order if it's still in "Pending" or "Confirmed" status. To cancel:</p>
+                                        <ol>
+                                            <li>Go to "My Orders" in your profile</li>
+                                            <li>Find the order you want to cancel</li>
+                                            <li>Click the "Cancel Order" button</li>
+                                        </ol>
+                                        <p>Once the order is being prepared or out for delivery, cancellation is not possible.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse6">
+                                        How do I track my order?
+                                    </button>
+                                </h2>
+                                <div id="collapse6" class="accordion-collapse collapse" data-bs-parent="#accordionOrdering">
+                                    <div class="accordion-body">
+                                        <p>You can track your order in two ways:</p>
+                                        <ul>
+                                            <li>Go to "My Orders" and click "Track Order"</li>
+                                            <li>Use the tracking link sent to your email/SMS</li>
+                                        </ul>
+                                        <p>The tracking page shows real-time status updates and estimated delivery time.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Methods -->
+                    <div id="payment" class="mb-5">
+                        <h3 class="border-bottom pb-2 mb-4">
+                            <i class="fas fa-credit-card text-primary me-2"></i>Payment Methods
+                        </h3>
+                        
+                        <div class="accordion" id="accordionPayment">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse7">
+                                        What payment methods are accepted?
+                                    </button>
+                                </h2>
+                                <div id="collapse7" class="accordion-collapse collapse show" data-bs-parent="#accordionPayment">
+                                    <div class="accordion-body">
+                                        <p>We accept the following payment methods:</p>
+                                        <ul>
+                                            <li><strong>Cash on Delivery (COD)</strong> - Pay when your order arrives</li>
+                                            <li><strong>Credit/Debit Card</strong> - Visa, Mastercard, American Express</li>
+                                            <li><strong>Mobile Money</strong> - MTN Money, Airtel Money, Orange Money</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse8">
+                                        Is my payment information secure?
+                                    </button>
+                                </h2>
+                                <div id="collapse8" class="accordion-collapse collapse" data-bs-parent="#accordionPayment">
+                                    <div class="accordion-body">
+                                        <p>Absolutely! We use industry-standard encryption to protect your payment information. All transactions are processed through secure payment gateways. We never store your full credit card details on our servers.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Delivery Information -->
+                    <div id="delivery" class="mb-5">
+                        <h3 class="border-bottom pb-2 mb-4">
+                            <i class="fas fa-truck text-primary me-2"></i>Delivery Information
+                        </h3>
+                        
+                        <div class="accordion" id="accordionDelivery">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse9">
+                                        How long does delivery take?
+                                    </button>
+                                </h2>
+                                <div id="collapse9" class="accordion-collapse collapse show" data-bs-parent="#accordionDelivery">
+                                    <div class="accordion-body">
+                                        <p>Delivery times vary by zone:</p>
+                                        <ul>
+                                            <li>Jozini Town Centre: 25-30 minutes</li>
+                                            <li>Jozini Market: 20-25 minutes</li>
+                                            <li>Lake Jozini: 35-40 minutes</li>
+                                            <li>Other zones: 35-50 minutes</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse10">
+                                        What is the delivery fee?
+                                    </button>
+                                </h2>
+                                <div id="collapse10" class="accordion-collapse collapse" data-bs-parent="#accordionDelivery">
+                                    <div class="accordion-body">
+                                        <p>Delivery fees vary by zone:</p>
+                                        <ul>
+                                            <li>Jozini Town Centre: R15</li>
+                                            <li>Jozini Market: R15</li>
+                                            <li>Lake Jozini: R25</li>
+                                            <li>eMpangeni: R30</li>
+                                            <li>Pongola: R35</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cancellations & Returns -->
+                    <div id="returns" class="mb-5">
+                        <h3 class="border-bottom pb-2 mb-4">
+                            <i class="fas fa-undo-alt text-primary me-2"></i>Cancellations & Returns
+                        </h3>
+                        
+                        <div class="accordion" id="accordionReturns">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse11">
+                                        Can I return items?
+                                    </button>
+                                </h2>
+                                <div id="collapse11" class="accordion-collapse collapse show" data-bs-parent="#accordionReturns">
+                                    <div class="accordion-body">
+                                        <p>Returns are handled directly with the shop. If you receive incorrect or damaged items, please:</p>
+                                        <ol>
+                                            <li>Contact the shop through our platform</li>
+                                            <li>Provide photos of the issue</li>
+                                            <li>The shop will arrange for replacement or refund</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse12">
+                                        How do I get a refund?
+                                    </button>
+                                </h2>
+                                <div id="collapse12" class="accordion-collapse collapse" data-bs-parent="#accordionReturns">
+                                    <div class="accordion-body">
+                                        <p>Refunds are processed based on the issue:</p>
+                                        <ul>
+                                            <li><strong>Cancelled orders:</strong> Full refund within 5-7 business days</li>
+                                            <li><strong>Damaged items:</strong> Partial or full refund based on the issue</li>
+                                            <li><strong>Late delivery:</strong> Partial refund of delivery fee</li>
+                                        </ul>
+                                        <p>Contact our support team for refund requests.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Account Management -->
+                    <div id="account" class="mb-5">
+                        <h3 class="border-bottom pb-2 mb-4">
+                            <i class="fas fa-user-circle text-primary me-2"></i>Account Management
+                        </h3>
+                        
+                        <div class="accordion" id="accordionAccount">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse13">
+                                        How do I reset my password?
+                                    </button>
+                                </h2>
+                                <div id="collapse13" class="accordion-collapse collapse show" data-bs-parent="#accordionAccount">
+                                    <div class="accordion-body">
+                                        <ol>
+                                            <li>Click "Forgot Password" on the login page</li>
+                                            <li>Enter your email address</li>
+                                            <li>Check your email for reset instructions</li>
+                                            <li>Follow the link to create a new password</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse14">
+                                        How do I update my profile?
+                                    </button>
+                                </h2>
+                                <div id="collapse14" class="accordion-collapse collapse" data-bs-parent="#accordionAccount">
+                                    <div class="accordion-body">
+                                        <ol>
+                                            <li>Go to your Profile page</li>
+                                            <li>Click "Edit Profile"</li>
+                                            <li>Update your information</li>
+                                            <li>Click "Save Changes"</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

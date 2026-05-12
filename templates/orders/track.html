@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Track Order {{ order.order_number }} - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h4 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Track Your Order</h4>
+                    <p class="mb-0 mt-2">Order #{{ order.order_number }}</p>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Progress Tracker -->
+                    <div class="progress-tracker mb-5">
+                        <div class="row">
+                            <div class="col text-center">
+                                <div class="step {% if order.order_status in ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered'] %}completed{% endif %}">
+                                    <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                                    <div class="step-label">Order Placed</div>
+                                    <div class="step-time">{{ order.created_at.strftime('%H:%M') }}</div>
+                                </div>
+                            </div>
+                            <div class="col text-center">
+                                <div class="step {% if order.order_status in ['confirmed', 'preparing', 'ready', 'picked_up', 'in_transit', 'delivered'] %}completed{% endif %}">
+                                    <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                                    <div class="step-label">Confirmed</div>
+                                </div>
+                            </div>
+                            <div class="col text-center">
+                                <div class="step {% if order.order_status in ['preparing', 'ready', 'picked_up', 'in_transit', 'delivered'] %}completed{% endif %}">
+                                    <div class="step-icon"><i class="fas fa-utensils"></i></div>
+                                    <div class="step-label">Preparing</div>
+                                </div>
+                            </div>
+                            <div class="col text-center">
+                                <div class="step {% if order.order_status in ['ready', 'picked_up', 'in_transit', 'delivered'] %}completed{% endif %}">
+                                    <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                                    <div class="step-label">Ready</div>
+                                </div>
+                            </div>
+                            <div class="col text-center">
+                                <div class="step {% if order.order_status in ['picked_up', 'in_transit', 'delivered'] %}completed{% endif %}">
+                                    <div class="step-icon"><i class="fas fa-truck"></i></div>
+                                    <div class="step-label">On The Way</div>
+                                </div>
+                            </div>
+                            <div class="col text-center">
+                                <div class="step {% if order.order_status == 'delivered' %}completed{% endif %}">
+                                    <div class="step-icon"><i class="fas fa-home"></i></div>
+                                    <div class="step-label">Delivered</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Status Card -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Current Status</h6>
+                                    <span class="status-badge status-{{ order.order_status }} fs-6 px-3 py-2">
+                                        {{ order.order_status|replace('_', ' ')|title }}
+                                    </span>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Estimated Delivery</h6>
+                                    {% if order.estimated_delivery %}
+                                        <p class="mb-0">
+                                            <i class="fas fa-clock me-2"></i>
+                                            {{ order.estimated_delivery.strftime('%Y-%m-%d %H:%M') }}
+                                        </p>
+                                    {% else %}
+                                        <p class="text-muted">To be confirmed</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Summary -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Order Summary</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Shop:</strong> {{ order.shop.shop_name if order.shop else 'N/A' }}</p>
+                            <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+                            <p><strong>Total Amount:</strong> {{ format_currency(order.grand_total) }}</p>
+                            
+                            <h6 class="mt-3">Items Ordered:</h6>
+                            <ul class="list-unstyled">
+                                {% for item in items %}
+                                    <li class="mb-2">{{ item.quantity }}x {{ item.name }} - {{ format_currency(item.total) }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="text-center">
+                        <a href="{{ url_for('order.order_detail', order_number=order.order_number) }}" class="btn btn-primary">
+                            <i class="fas fa-info-circle"></i> View Full Details
+                        </a>
+                        <a href="{{ url_for('shop.browse') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-shopping-bag"></i> Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .progress-tracker {
+        position: relative;
+    }
+    .progress-tracker .row {
+        position: relative;
+    }
+    .progress-tracker .row::before {
+        content: '';
+        position: absolute;
+        top: 30px;
+        left: 10%;
+        right: 10%;
+        height: 2px;
+        background: #dee2e6;
+        z-index: 0;
+    }
+    .step {
+        position: relative;
+        z-index: 1;
+        background: white;
+        display: inline-block;
+        width: 100%;
+    }
+    .step-icon {
+        width: 50px;
+        height: 50px;
+        background: #dee2e6;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        font-size: 20px;
+        color: #6c757d;
+    }
+    .step.completed .step-icon {
+        background: #198754;
+        color: white;
+    }
+    .step-label {
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+    .step-time {
+        font-size: 10px;
+        color: #6c757d;
+    }
+    @media (max-width: 768px) {
+        .step-icon {
+            width: 35px;
+            height: 35px;
+            font-size: 14px;
+        }
+        .step-label {
+            font-size: 10px;
+        }
+    }
+</style>
+{% endblock %}

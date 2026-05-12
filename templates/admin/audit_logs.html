@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Logs - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-bar {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .table {
+        width: 100%;
+        margin-bottom: 0;
+    }
+    .table td, .table th {
+        vertical-align: middle;
+        padding: 12px;
+    }
+    .badge-action {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+        display: inline-block;
+    }
+    .badge-create { background: #198754; color: white; }
+    .badge-update { background: #ffc107; color: #000; }
+    .badge-delete { background: #dc3545; color: white; }
+    .badge-login { background: #0d6efd; color: white; }
+    .badge-logout { background: #6c757d; color: white; }
+    .badge-approve { background: #10b981; color: white; }
+    .badge-suspend { background: #fd7e14; color: white; }
+    .pagination {
+        justify-content: center;
+        margin-top: 20px;
+        margin-bottom: 0;
+    }
+    .page-link {
+        margin: 0 3px;
+        border-radius: 8px;
+    }
+    .details-modal .modal-body {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    pre {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        margin-bottom: 0;
+    }
+    .table-dark th {
+        background-color: #1a1a2e;
+        color: white;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    @media print {
+        .filter-bar, .btn-export, .no-print, .pagination {
+            display: none !important;
+        }
+        .table-dark th {
+            background-color: #ddd !important;
+            color: #000 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Audit Logs</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Bar -->
+                    <div class="filter-bar no-print">
+                        <form method="GET" class="row g-3 align-items-end">
+                            <div class="col-md-2">
+                                <label class="form-label mb-0">Action</label>
+                                <select name="action" class="form-select">
+                                    <option value="">All Actions</option>
+                                    {% for act in actions %}
+                                        <option value="{{ act }}" {% if selected_action == act %}selected{% endif %}>
+                                            {{ act|title }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label mb-0">User</label>
+                                <select name="user_id" class="form-select">
+                                    <option value="">All Users</option>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}" {% if selected_user_id == user.id %}selected{% endif %}>
+                                            {{ user.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label mb-0">From Date</label>
+                                <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label mb-0">To Date</label>
+                                <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search me-2"></i>Filter Logs
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Logs Table -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Resource Type</th>
+                                    <th>Resource ID</th>
+                                    <th>IP Address</th>
+                                    <th>Details</th>
+                                 </tr
+                            </thead>
+                            <tbody>
+                                {% for log in logs.items %}
+                                 <tr
+                                     <td><small>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</small> </td
+                                     <td>
+                                        {% if log.user %}
+                                            <strong>{{ log.user.name }}</strong><br>
+                                            <small class="text-muted">{{ log.user.email }}</small>
+                                        {% else %}
+                                            <span class="text-muted">System</span>
+                                        {% endif %}
+                                      </td
+                                     <td>
+                                        <span class="badge-action badge-{{ log.action }}">
+                                            {{ log.action|title }}
+                                        </span>
+                                      </td
+                                     <td>{{ log.resource_type or '-' }}</td
+                                     <td>{{ log.resource_id or '-' }}</td
+                                     <td>{{ log.ip_address or '-' }}</td
+                                     <td>
+                                        <button class="btn btn-sm btn-outline-info view-details" 
+                                                data-old-value="{{ log.old_value|default('')|e }}"
+                                                data-new-value="{{ log.new_value|default('')|e }}"
+                                                data-user-agent="{{ log.user_agent|default('')|e }}">
+                                            <i class="fas fa-info-circle"></i> View
+                                        </button>
+                                      </td
+                                  </tr
+                                {% else %}
+                                 <tr
+                                    <td colspan="7" class="text-center py-5">
+                                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                        <h5>No Audit Logs Found</h5>
+                                        <p class="text-muted mb-0">No logs match your filter criteria.</p>
+                                    </td
+                                 </tr
+                                {% endfor %}
+                            </tbody>
+                         </table
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if logs.pages > 1 %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <nav>
+                                <ul class="pagination">
+                                    {% if logs.has_prev %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('admin.audit_logs', page=logs.prev_num, action=selected_action, user_id=selected_user_id, start_date=start_date, end_date=end_date) }}">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for page in logs.iter_pages() %}
+                                        {% if page %}
+                                            <li class="page-item {% if page == logs.page %}active{% endif %}">
+                                                <a class="page-link" href="{{ url_for('admin.audit_logs', page=page, action=selected_action, user_id=selected_user_id, start_date=start_date, end_date=end_date) }}">{{ page }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if logs.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('admin.audit_logs', page=logs.next_num, action=selected_action, user_id=selected_user_id, start_date=start_date, end_date=end_date) }}">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Total Count -->
+                    <div class="row mt-3">
+                        <div class="col-12 text-end">
+                            <small class="text-muted">Total logs: {{ logs.total }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Details Modal -->
+<div class="modal fade" id="logDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Log Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body details-modal">
+                <div class="mb-3">
+                    <label class="fw-bold text-primary">Old Value:</label>
+                    <pre id="oldValue" class="bg-light p-2 rounded" style="max-height: 200px; overflow: auto;">-</pre>
+                </div>
+                <div class="mb-3">
+                    <label class="fw-bold text-success">New Value:</label>
+                    <pre id="newValue" class="bg-light p-2 rounded" style="max-height: 200px; overflow: auto;">-</pre>
+                </div>
+                <div class="mb-3">
+                    <label class="fw-bold text-secondary">User Agent:</label>
+                    <pre id="userAgent" class="bg-light p-2 rounded" style="max-height: 150px; overflow: auto; font-size: 11px;">-</pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="copyToClipboard()">
+                    <i class="fas fa-copy me-2"></i>Copy Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentOldValue = '';
+    let currentNewValue = '';
+    let currentUserAgent = '';
+    
+    function formatValue(value) {
+        if (!value || value === 'null' || value === 'None' || value === '') {
+            return '-';
+        }
+        try {
+            // Try to parse as JSON for better formatting
+            const parsed = JSON.parse(value);
+            return JSON.stringify(parsed, null, 2);
+        } catch (e) {
+            return value;
+        }
+    }
+    
+    document.querySelectorAll('.view-details').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentOldValue = this.getAttribute('data-old-value');
+            currentNewValue = this.getAttribute('data-new-value');
+            currentUserAgent = this.getAttribute('data-user-agent');
+            
+            document.getElementById('oldValue').textContent = formatValue(currentOldValue);
+            document.getElementById('newValue').textContent = formatValue(currentNewValue);
+            document.getElementById('userAgent').textContent = currentUserAgent || '-';
+            
+            new bootstrap.Modal(document.getElementById('logDetailsModal')).show();
+        });
+    });
+    
+    function copyToClipboard() {
+        const text = `=== Audit Log Details ===\n\n--- Old Value ---\n${currentOldValue}\n\n--- New Value ---\n${currentNewValue}\n\n--- User Agent ---\n${currentUserAgent}`;
+        
+        navigator.clipboard.writeText(text).then(function() {
+            if (typeof toastr !== 'undefined') {
+                toastr.success('Copied to clipboard!');
+            } else {
+                alert('Copied to clipboard!');
+            }
+        }, function() {
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Failed to copy');
+            } else {
+                alert('Failed to copy');
+            }
+        });
+    }
+</script>
+{% endblock %}

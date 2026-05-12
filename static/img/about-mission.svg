@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400">
+    <rect width="500" height="400" fill="#f8f9fa"/>
+    <circle cx="250" cy="200" r="140" fill="#e8f5e9"/>
+    <path d="M250,120 L280,180 L350,190 L300,240 L310,310 L250,280 L190,310 L200,240 L150,190 L220,180 Z" fill="#198754"/>
+    <circle cx="250" cy="200" r="30" fill="#fff"/>
+    <text x="250" y="205" text-anchor="middle" fill="#198754" font-size="20" font-weight="bold">★</text>
+    <text x="250" y="370" text-anchor="middle" fill="#666" font-size="14">Our Mission</text>
+</svg>

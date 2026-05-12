@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Rate Your Order - Jozini Move{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rating-stars {
+        display: inline-flex;
+        gap: 15px;
+        cursor: pointer;
+        direction: ltr;
+    }
+    .rating-stars i {
+        font-size: 3rem;
+        transition: all 0.2s ease;
+        color: #ddd;
+        cursor: pointer;
+    }
+    .rating-stars i:hover {
+        transform: scale(1.1);
+        color: #ffc107;
+    }
+    .rating-stars i.selected,
+    .rating-stars i.active {
+        color: #ffc107;
+    }
+    .btn-action {
+        transition: all 0.3s ease;
+    }
+    .btn-action:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white text-center py-4">
+                    <h4 class="mb-0"><i class="fas fa-star me-2"></i>Rate Your Experience</h4>
+                    <p class="mb-0 mt-2">Order #{{ order.order_number }}</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" id="reviewForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="text-center mb-4">
+                            <p class="mb-3">How would you rate your order from <strong>{{ order.shop.shop_name }}</strong>?</p>
+                            
+                            <div class="rating-stars mb-4">
+                                <i class="far fa-star" data-rating="1"></i>
+                                <i class="far fa-star" data-rating="2"></i>
+                                <i class="far fa-star" data-rating="3"></i>
+                                <i class="far fa-star" data-rating="4"></i>
+                                <i class="far fa-star" data-rating="5"></i>
+                            </div>
+                            
+                            {{ form.rating(id="rating_value", class="d-none") }}
+                            
+                            <div id="ratingError" class="alert alert-warning mt-2" style="display: none;">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Please select a rating
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="review" class="form-label">Write a Review (Optional)</label>
+                            {{ form.review(class="form-control", rows="4", placeholder="Share your experience with the shop...") }}
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-action" id="submitBtn">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Review
+                            </button>
+                            <a href="{{ url_for('order.order_detail', order_number=order.order_number) }}" class="btn btn-secondary btn-action">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    let selectedRating = 0;
+    
+    // Star click handler
+    $('.rating-stars i').click(function() {
+        selectedRating = parseInt($(this).data('rating'));
+        $('#rating_value').val(selectedRating);
+        
+        // Update stars
+        $('.rating-stars i').each(function() {
+            const starRating = parseInt($(this).data('rating'));
+            if (starRating <= selectedRating) {
+                $(this).removeClass('far').addClass('fas');
+            } else {
+                $(this).removeClass('fas').addClass('far');
+            }
+        });
+        
+        $('#ratingError').hide();
+        toastr.success(selectedRating + ' star rating selected');
+    });
+    
+    // Form validation
+    $('#reviewForm').submit(function(e) {
+        if (selectedRating === 0) {
+            e.preventDefault();
+            $('#ratingError').show();
+            toastr.warning('Please select a rating before submitting');
+            return false;
+        }
+        return true;
+    });
+});
+</script>
+{% endblock %}

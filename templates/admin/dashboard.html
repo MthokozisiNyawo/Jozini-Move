@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Jozini Move{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-wrapper {
+        display: flex;
+        gap: 20px;
+        min-height: calc(100vh - 200px);
+    }
+    
+    .admin-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        position: sticky;
+        top: 90px;
+        height: fit-content;
+    }
+    
+    .admin-sidebar .nav-link {
+        padding: 12px 20px;
+        color: #495057;
+        border-radius: 8px;
+        margin: 4px 8px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: block;
+    }
+    
+    .admin-sidebar .nav-link:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .admin-sidebar .nav-link.active {
+        background: linear-gradient(135deg, #0d6efd, #10b981);
+        color: white;
+    }
+    
+    .admin-sidebar .nav-link i {
+        width: 24px;
+        margin-right: 10px;
+    }
+    
+    .admin-content {
+        flex: 1;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        padding: 20px;
+    }
+    
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+        margin-bottom: 10px;
+    }
+    
+    .sidebar-header h5 {
+        margin-bottom: 5px;
+    }
+    
+    .stat-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    @media (max-width: 768px) {
+        .admin-wrapper {
+            flex-direction: column;
+        }
+        .admin-sidebar {
+            width: 100%;
+            position: static;
+        }
+        .admin-sidebar .nav {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .admin-sidebar .nav-link {
+            flex: 1;
+            text-align: center;
+            min-width: 120px;
+        }
+        .admin-sidebar .nav-link i {
+            margin-right: 5px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="admin-wrapper">
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <h5><i class="fas fa-crown me-2"></i>Admin Panel</h5>
+                <p class="text-muted small mb-0">Welcome back, {{ current_user.name }}!</p>
+            </div>
+            <nav class="nav nav-pills flex-column">
+                <a class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </a>
+                <a class="nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}" href="{{ url_for('admin.users') }}">
+                    <i class="fas fa-users"></i> Users Management
+                </a>
+                <a class="nav-link {% if request.endpoint == 'admin.shops' %}active{% endif %}" href="{{ url_for('admin.shops') }}">
+                    <i class="fas fa-store"></i> Shops Management
+                </a>
+                <a class="nav-link {% if request.endpoint == 'admin.orders' %}active{% endif %}" href="{{ url_for('admin.orders') }}">
+                    <i class="fas fa-shopping-bag"></i> Orders Management
+                </a>
+                <a class="nav-link {% if request.endpoint == 'admin.delivery_zones' %}active{% endif %}" href="{{ url_for('admin.delivery_zones') }}">
+                    <i class="fas fa-map-marker-alt"></i> Delivery Zones
+                </a>
+                <a class="nav-link {% if request.endpoint == 'admin.reports_sales' %}active{% endif %}" href="{{ url_for('admin.reports_sales') }}">
+                    <i class="fas fa-chart-bar"></i> Sales Report
+                </a>
+                <a class="nav-link {% if request.endpoint == 'admin.settings' %}active{% endif %}" href="{{ url_for('admin.settings') }}">
+                    <i class="fas fa-cog"></i> System Settings
+                </a>
+                <a class="nav-link {% if request.endpoint == 'admin.audit_logs' %}active{% endif %}" href="{{ url_for('admin.audit_logs') }}">
+                    <i class="fas fa-history"></i> Audit Logs
+                </a>
+            </nav>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="admin-content">
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-primary text-white shadow-sm stat-card" onclick="window.location.href='{{ url_for('admin.users') }}'">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Users</h6>
+                            <h2 class="mb-0">{{ total_users }}</h2>
+                            <small>{{ total_customers }} customers, {{ total_drivers }} drivers, {{ total_shop_owners }} shop owners</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-success text-white shadow-sm stat-card" onclick="window.location.href='{{ url_for('admin.shops') }}'">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Shops</h6>
+                            <h2 class="mb-0">{{ total_shops }}</h2>
+                            <small>{{ active_shops }} active, {{ pending_shops }} pending</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-info text-white shadow-sm stat-card" onclick="window.location.href='{{ url_for('admin.orders') }}'">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Orders</h6>
+                            <h2 class="mb-0">{{ total_orders }}</h2>
+                            <small>{{ today_orders }} today</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card bg-warning text-white shadow-sm stat-card">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Revenue</h6>
+                            <h2 class="mb-0">{{ format_currency(total_revenue) }}</h2>
+                            <small>{{ format_currency(today_revenue) }} today</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h6 class="mb-0">Daily Orders (Last 7 Days)</h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="dailyOrdersChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h6 class="mb-0">Monthly Revenue</h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="revenueChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Orders -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Recent Orders</h6>
+                            <a href="{{ url_for('admin.orders') }}" class="btn btn-sm btn-primary">View All</a>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Customer</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in recent_orders %}
+                                        <tr>
+                                            <td><a href="{{ url_for('admin.order_detail', order_number=order.order_number) }}">{{ order.order_number }}</a></td>
+                                            <td>{{ order.customer.name }}</td>
+                                            <td>{{ format_currency(order.grand_total) }}</td>
+                                            <td><span class="status-badge status-{{ order.order_status }}">{{ order.order_status }}</span></td>
+                                            <td>{{ order.created_at.strftime('%H:%M') }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Top Shops -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h6 class="mb-0">Top Performing Shops</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Shop</th>
+                                            <th>Orders</th>
+                                            <th>Revenue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for shop in top_shops %}
+                                        <tr>
+                                            <td>{{ shop.shop_name }}</td>
+                                            <td>{{ shop.total_orders }}</td>
+                                            <td>{{ format_currency(shop.total_revenue) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-users me-2"></i> Manage Users
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.shops') }}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-store me-2"></i> Manage Shops
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.orders') }}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-shopping-bag me-2"></i> View Orders
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin.delivery_zones') }}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-map-marker-alt me-2"></i> Delivery Zones
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Daily Orders Chart
+    const dailyCtx = document.getElementById('dailyOrdersChart').getContext('2d');
+    new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ daily_stats|map(attribute='date')|list|tojson }},
+            datasets: [{
+                label: 'Orders',
+                data: {{ daily_stats|map(attribute='orders')|list|tojson }},
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ monthly_stats|map(attribute='month')|list|tojson }},
+            datasets: [{
+                label: 'Revenue (R)',
+                data: {{ monthly_stats|map(attribute='revenue')|list|tojson }},
+                backgroundColor: '#198754',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

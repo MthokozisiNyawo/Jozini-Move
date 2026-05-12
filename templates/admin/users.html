@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>User Management</h5>
+                    <div>
+                        <span class="badge bg-light text-dark me-2">Total: {{ users.total }}</span>
+                        <button class="btn btn-sm btn-light" onclick="location.reload()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Filters -->
+                    <form method="GET" class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <input type="text" name="search" class="form-control" placeholder="Search by name, email, phone..." value="{{ search }}">
+                        </div>
+                        <div class="col-md-3">
+                            <select name="type" class="form-select">
+                                <option value="">All Types</option>
+                                <option value="customer" {% if user_type == 'customer' %}selected{% endif %}>Customer</option>
+                                <option value="driver" {% if user_type == 'driver' %}selected{% endif %}>Driver</option>
+                                <option value="shop_owner" {% if user_type == 'shop_owner' %}selected{% endif %}>Shop Owner</option>
+                                <option value="admin" {% if user_type == 'admin' %}selected{% endif %}>Admin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="status" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                                <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Filter
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Users Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users.items %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>
+                                        {% if user.profile_image %}
+                                            <img src="{{ url_for('static', filename='uploads/profile/' + user.profile_image) }}" class="rounded-circle me-2" width="30" height="30">
+                                        {% endif %}
+                                        {{ user.name }}
+                                    </td>
+                                    <td>{{ user.phone }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'info' if user.user_type == 'customer' else 'warning' if user.user_type == 'driver' else 'success' if user.user_type == 'shop_owner' else 'danger' }}">
+                                            {{ user.user_type|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-{{ 'danger' if user.is_active else 'success' }} toggle-status" data-user-id="{{ user.id }}">
+                                            <i class="fas fa-{{ 'ban' if user.is_active else 'check' }}"></i>
+                                        </button>
+                                        {% if not user.is_admin() %}
+                                            <button class="btn btn-sm btn-primary make-admin" data-user-id="{{ user.id }}">
+                                                <i class="fas fa-crown"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if users.pages > 1 %}
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            {% if users.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.users', page=users.prev_num, search=search, type=user_type, status=status) }}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page in users.iter_pages() %}
+                                {% if page %}
+                                    <li class="page-item {% if page == users.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('admin.users', page=page, search=search, type=user_type, status=status) }}">{{ page }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if users.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.users', page=users.next_num, search=search, type=user_type, status=status) }}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('.toggle-status').click(function() {
+        const userId = $(this).data('user-id');
+        $.ajax({
+            url: "{{ url_for('admin.toggle_user_status', user_id=0) }}".replace('/0', '/' + userId),
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    location.reload();
+                } else {
+                    toastr.error(response.message);
+                }
+            }
+        });
+    });
+    
+    $('.make-admin').click(function() {
+        const userId = $(this).data('user-id');
+        if (confirm('Make this user an admin?')) {
+            $.ajax({
+                url: "{{ url_for('admin.make_admin', user_id=0) }}".replace('/0', '/' + userId),
+                method: 'POST',
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        location.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

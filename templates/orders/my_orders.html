@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders - Jozini Move{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+        display: block;
+        margin-bottom: 20px;
+    }
+    .order-card.status-pending { border-left-color: #ffc107; }
+    .order-card.status-confirmed { border-left-color: #17a2b8; }
+    .order-card.status-preparing { border-left-color: #fd7e14; }
+    .order-card.status-ready { border-left-color: #0d6efd; }
+    .order-card.status-accepted { border-left-color: #6f42c1; }
+    .order-card.status-picked_up { border-left-color: #20c997; }
+    .order-card.status-in_transit { border-left-color: #0dcaf0; }
+    .order-card.status-delivered { border-left-color: #198754; }
+    .order-card.status-cancelled { border-left-color: #dc3545; }
+    
+    .filter-btn {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 2px;
+    }
+    .filter-btn.active {
+        background: linear-gradient(135deg, #0d6efd, #10b981);
+        color: white;
+        border-color: transparent;
+    }
+    .filter-btn:hover:not(.active) {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .stats-card.active {
+        background: linear-gradient(135deg, #e8f5e9, #ffffff);
+        border: 2px solid #10b981;
+    }
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #0d6efd, #10b981);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .btn-action {
+        transition: all 0.3s ease;
+    }
+    .btn-action:hover {
+        transform: translateY(-2px);
+    }
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        font-size: 0.8rem;
+        margin-bottom: 5px;
+    }
+    .info-value {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .filter-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-shopping-bag me-2"></i>
+                    {% if current_user.is_customer() %}
+                        My Orders
+                    {% elif current_user.is_shop_owner() %}
+                        Shop Orders
+                    {% elif current_user.is_driver() %}
+                        My Deliveries
+                    {% else %}
+                        Orders
+                    {% endif %}
+                </h2>
+                {% if current_user.is_customer() %}
+                    <a href="{{ url_for('shop.browse') }}" class="btn btn-primary btn-action">
+                        <i class="fas fa-shopping-cart me-2"></i>Continue Shopping
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards (Clickable Filters) -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stats-card filter-stat" data-filter="all">
+                <div class="stats-number">{{ orders|length }}</div>
+                <div class="text-muted">Total Orders</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card filter-stat" data-filter="delivered">
+                <div class="stats-number">{{ orders|selectattr('order_status', 'equalto', 'delivered')|list|length }}</div>
+                <div class="text-muted">Completed</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card filter-stat" data-filter="processing">
+                <div class="stats-number">{{ orders|rejectattr('order_status', 'in', ['delivered', 'cancelled'])|list|length }}</div>
+                <div class="text-muted">In Progress</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card filter-stat" data-filter="cancelled">
+                <div class="stats-number">{{ orders|selectattr('order_status', 'equalto', 'cancelled')|list|length }}</div>
+                <div class="text-muted">Cancelled</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ordersContainer">
+        {% if orders %}
+            {% for order in orders %}
+            <div class="card shadow-sm mb-4 order-card status-{{ order.order_status }}" 
+                 data-status="{{ order.order_status }}"
+                 data-order-id="{{ order.id }}"
+                 id="order-{{ order.order_number }}">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <!-- Order Header -->
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="mb-1">
+                                        Order #{{ order.order_number }}
+                                        {% if (now - order.created_at).seconds < 300 %}
+                                            <span class="badge bg-danger ms-2">NEW</span>
+                                        {% endif %}
+                                    </h5>
+                                    <p class="text-muted small mb-0">
+                                        <i class="fas fa-calendar me-1"></i>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                    </p>
+                                </div>
+                                <div class="text-end">
+                                    <span class="status-badge status-{{ order.order_status }}">
+                                        {{ order.order_status|replace('_', ' ')|title }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Order Details based on User Type -->
+                            <div class="row mb-3">
+                                {% if current_user.is_customer() %}
+                                <div class="col-md-6">
+                                    <div class="info-section">
+                                        <div class="info-label">Shop Information</div>
+                                        <div class="info-value">
+                                            <i class="fas fa-store me-1"></i> {{ order.shop.shop_name }}
+                                        </div>
+                                        <div class="info-value">
+                                            <i class="fas fa-map-marker-alt me-1"></i> {{ order.delivery_address[:50] }}{% if order.delivery_address|length > 50 %}...{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-section">
+                                        <div class="info-label">Delivery Details</div>
+                                        <div class="info-value">
+                                            <i class="fas fa-truck me-1"></i> {{ order.delivery_zone|replace('_', ' ')|title }}
+                                        </div>
+                                        {% if order.driver %}
+                                        <div class="info-value">
+                                            <i class="fas fa-motorcycle me-1"></i> Driver: {{ order.driver.name }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% elif current_user.is_shop_owner() %}
+                                <div class="col-md-6">
+                                    <div class="info-section">
+                                        <div class="info-label">Customer Information</div>
+                                        <div class="info-value">
+                                            <i class="fas fa-user me-1"></i> {{ order.customer.name }}
+                                        </div>
+                                        <div class="info-value">
+                                            <i class="fas fa-phone me-1"></i> {{ order.customer.phone }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-section">
+                                        <div class="info-label">Delivery Information</div>
+                                        <div class="info-value">
+                                            <i class="fas fa-map-marker-alt me-1"></i> {{ order.delivery_address[:50] }}{% if order.delivery_address|length > 50 %}...{% endif %}
+                                        </div>
+                                        <div class="info-value">
+                                            <i class="fas fa-money-bill me-1"></i> Payment: {{ order.payment_method|title }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% elif current_user.is_driver() %}
+                                <div class="col-md-6">
+                                    <div class="info-section">
+                                        <div class="info-label">Customer Information</div>
+                                        <div class="info-value">
+                                            <i class="fas fa-user me-1"></i> {{ order.customer.name }}
+                                        </div>
+                                        <div class="info-value">
+                                            <i class="fas fa-phone me-1"></i> {{ order.customer.phone }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-section">
+                                        <div class="info-label">Earnings</div>
+                                        <div class="info-value text-success fw-bold">
+                                            <i class="fas fa-money-bill me-1"></i> {{ format_currency(order.delivery_fee * 0.7 + 5) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Items Summary -->
+                            <div class="bg-light p-2 rounded">
+                                <small class="text-muted">
+                                    <i class="fas fa-box me-1"></i>
+                                    {{ order.get_items()|length }} item(s)
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-end">
+                            <div class="mb-3">
+                                <h4 class="text-primary mb-0">{{ format_currency(order.grand_total) }}</h4>
+                                <small class="text-muted">Total Amount</small>
+                            </div>
+                            
+                            <div class="action-buttons">
+                                <a href="{{ url_for('order.order_detail', order_number=order.order_number) }}" class="btn btn-info btn-sm btn-action">
+                                    <i class="fas fa-eye me-1"></i>View Details
+                                </a>
+                                
+                                {% if current_user.is_customer() %}
+                                    {% if order.order_status in ['pending', 'confirmed'] %}
+                                        <button type="button" class="btn btn-danger btn-sm btn-action cancel-order-btn" data-order="{{ order.order_number }}">
+                                            <i class="fas fa-times me-1"></i>Cancel Order
+                                        </button>
+                                    {% endif %}
+                                    {% if order.order_status == 'delivered' and not order.customer_rating %}
+                                        <a href="{{ url_for('order.review_order', order_number=order.order_number) }}" class="btn btn-warning btn-sm btn-action">
+                                            <i class="fas fa-star me-1"></i>Rate Order
+                                        </a>
+                                    {% endif %}
+                                    <a href="{{ url_for('order.track_order', order_number=order.order_number) }}" class="btn btn-outline-secondary btn-sm btn-action">
+                                        <i class="fas fa-map-marker-alt me-1"></i>Track Order
+                                    </a>
+                                {% endif %}
+                                
+                                {% if current_user.is_shop_owner() %}
+                                    {% if order.order_status in ['confirmed', 'preparing', 'ready'] %}
+                                        <a href="{{ url_for('shop.update_order_status', order_number=order.order_number) }}" class="btn btn-primary btn-sm btn-action">
+                                            <i class="fas fa-edit me-1"></i>Update Status
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                {% if current_user.is_driver() and order.order_status == 'delivered' %}
+                                    <span class="text-success small">
+                                        <i class="fas fa-check-circle me-1"></i>Completed
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+                    <h4>No Orders Found</h4>
+                    <p class="text-muted">
+                        {% if current_user.is_customer() %}
+                            You haven't placed any orders yet.
+                            <br><a href="{{ url_for('shop.browse') }}" class="btn btn-primary mt-3">Start Shopping</a>
+                        {% elif current_user.is_shop_owner() %}
+                            You haven't received any orders yet.
+                            <br><a href="{{ url_for('shop.shop_dashboard') }}" class="btn btn-primary mt-3">Go to Dashboard</a>
+                        {% elif current_user.is_driver() %}
+                            You haven't completed any deliveries yet.
+                            <br><a href="{{ url_for('driver.dashboard') }}" class="btn btn-primary mt-3">View Available Orders</a>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    console.log("Page loaded, initializing filters...");
+    
+    // Function to filter orders
+    window.filterOrders = function(filterValue) {
+        console.log("Filtering by:", filterValue);
+        
+        if (filterValue === 'all') {
+            $('.order-card').show();
+            console.log("Showing all orders");
+        } else {
+            let visibleCount = 0;
+            $('.order-card').each(function() {
+                const orderStatus = $(this).data('status');
+                if (orderStatus === filterValue) {
+                    $(this).show();
+                    visibleCount++;
+                } else {
+                    $(this).hide();
+                }
+            });
+            console.log("Showing " + visibleCount + " orders with status: " + filterValue);
+        }
+    };
+    
+    // Filter button click handler
+    $('.filter-btn').click(function() {
+        const filterValue = $(this).data('filter');
+        console.log("Filter button clicked:", filterValue);
+        
+        // Update active state for filter buttons
+        $('.filter-btn').removeClass('active');
+        $(this).addClass('active');
+        
+        // Remove active state from stat cards
+        $('.filter-stat').removeClass('active');
+        
+        // Apply filter
+        window.filterOrders(filterValue);
+    });
+    
+    // Stat card click handler
+    $('.filter-stat').click(function() {
+        const filterValue = $(this).data('filter');
+        console.log("Stat card clicked:", filterValue);
+        
+        // Update active state for stat cards
+        $('.filter-stat').removeClass('active');
+        $(this).addClass('active');
+        
+        // Update filter button active state
+        $('.filter-btn').removeClass('active');
+        $(`.filter-btn[data-filter="${filterValue}"]`).addClass('active');
+        
+        // Apply filter
+        window.filterOrders(filterValue);
+    });
+    
+    // Cancel order functionality
+    $(document).on('click', '.cancel-order-btn', function(e) {
+        e.preventDefault();
+        const orderNumber = $(this).data('order');
+        const btn = $(this);
+        
+        console.log("Cancel order clicked for:", orderNumber);
+        
+        if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+            const originalText = btn.html();
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Cancelling...');
+            
+            $.ajax({
+                url: "/orders/" + orderNumber + "/cancel",
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                success: function(response) {
+                    console.log("Cancel response:", response);
+                    if (response.success) {
+                        toastr.success('Order cancelled successfully');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        toastr.error(response.message || 'Failed to cancel order');
+                        btn.prop('disabled', false).html(originalText);
+                    }
+                },
+                error: function(xhr) {
+                    console.error("Cancel error:", xhr);
+                    let errorMsg = 'Failed to cancel order';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    toastr.error(errorMsg);
+                    btn.prop('disabled', false).html(originalText);
+                }
+            });
+        }
+    });
+    
+    // Debug: Log all order statuses found
+    console.log("Order statuses found:");
+    $('.order-card').each(function() {
+        console.log(" - " + $(this).data('status'));
+    });
+});
+</script>
+{% endblock %}

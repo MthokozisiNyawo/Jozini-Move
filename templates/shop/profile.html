@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Shop Profile - {{ shop.shop_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .shop-header {
+        background: linear-gradient(135deg, #0d6efd, #10b981);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+    }
+    .shop-logo {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .nav-tabs .nav-link {
+        color: #495057;
+        font-weight: 500;
+    }
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom-color: #0d6efd;
+    }
+    .image-preview {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 50%;
+        margin-top: 10px;
+        border: 2px solid #dee2e6;
+    }
+    .preview-container {
+        position: relative;
+        display: inline-block;
+    }
+    .remove-image {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    .qr-code img {
+        max-width: 200px;
+    }
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .status-active { background: #198754; color: white; }
+    .status-pending { background: #ffc107; color: #000; }
+    .status-open { background: #198754; color: white; }
+    .status-closed { background: #dc3545; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Shop Header -->
+    <div class="shop-header">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                {% if shop.logo %}
+                    <img src="{{ url_for('static', filename='uploads/logos/' + shop.logo) }}" class="shop-logo" alt="{{ shop.shop_name }}">
+                {% else %}
+                    <div class="shop-logo bg-white d-flex align-items-center justify-content-center">
+                        <i class="fas fa-store fa-3x text-primary"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col">
+                <h2 class="mb-2">{{ shop.shop_name }}</h2>
+                <div class="mb-2">
+                    <span class="text-warning">
+                        {% for i in range(shop.rating|int) %}★{% endfor %}
+                        {% for i in range(5 - shop.rating|int) %}☆{% endfor %}
+                    </span>
+                    <span class="ms-2">({{ shop.rating_count }} ratings)</span>
+                </div>
+                <div>
+                    <span class="status-badge status-{{ shop.status }}">
+                        {{ shop.status|title }}
+                    </span>
+                    {% if shop.is_open %}
+                        <span class="status-badge status-open ms-2">Open Now</span>
+                    {% else %}
+                        <span class="status-badge status-closed ms-2">Closed</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-auto">
+                <a href="{{ url_for('shop.shop_detail', shop_id=shop.id) }}" class="btn btn-light">
+                    <i class="fas fa-eye me-2"></i>View Shop Page
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="shopTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                <i class="fas fa-info-circle me-2"></i>Shop Information
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="hours-tab" data-bs-toggle="tab" data-bs-target="#hours" type="button" role="tab">
+                <i class="fas fa-clock me-2"></i>Business Hours
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="delivery-tab" data-bs-toggle="tab" data-bs-target="#delivery" type="button" role="tab">
+                <i class="fas fa-truck me-2"></i>Delivery Settings
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="qr-tab" data-bs-toggle="tab" data-bs-target="#qr" type="button" role="tab">
+                <i class="fas fa-qrcode me-2"></i>QR Code
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <!-- Shop Information Tab -->
+        <div class="tab-pane fade show active" id="info" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Shop Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('shop.update_shop_info', shop_id=shop.id) }}" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Shop Name *</label>
+                                <input type="text" name="shop_name" class="form-control" value="{{ shop.shop_name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Category *</label>
+                                <select name="category" class="form-select" required>
+                                    <option value="restaurant" {% if shop.category == 'restaurant' %}selected{% endif %}>Restaurant/Food</option>
+                                    <option value="butchery" {% if shop.category == 'butchery' %}selected{% endif %}>Butchery</option>
+                                    <option value="grocery" {% if shop.category == 'grocery' %}selected{% endif %}>Grocery Store</option>
+                                    <option value="pharmacy" {% if shop.category == 'pharmacy' %}selected{% endif %}>Pharmacy</option>
+                                    <option value="hardware" {% if shop.category == 'hardware' %}selected{% endif %}>Hardware</option>
+                                    <option value="clothing" {% if shop.category == 'clothing' %}selected{% endif %}>Clothing</option>
+                                    <option value="electronics" {% if shop.category == 'electronics' %}selected{% endif %}>Electronics</option>
+                                    <option value="other" {% if shop.category == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Address *</label>
+                            <textarea name="address" class="form-control" rows="2" required>{{ shop.address }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone Number *</label>
+                                <input type="text" name="phone" class="form-control" value="{{ shop.phone }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" name="email" class="form-control" value="{{ shop.email or '' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="4">{{ shop.description or '' }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Shop Logo</label>
+                            <div id="currentLogo">
+                                {% if shop.logo %}
+                                    <div class="preview-container mb-2">
+                                        <img src="{{ url_for('static', filename='uploads/logos/' + shop.logo) }}" class="image-preview" alt="Current Logo">
+                                        <button type="button" class="remove-image" onclick="removeLogo()">×</button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <input type="file" name="logo" class="form-control" accept="image/*" id="logoInput">
+                            <small class="text-muted">Recommended: Square image, max 2MB. JPG, PNG, GIF</small>
+                            <div id="logoPreview" style="display: none; margin-top: 10px;">
+                                <img id="logoPreviewImg" class="image-preview" src="#" alt="Preview">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_open" id="isOpen" {% if shop.is_open %}checked{% endif %}>
+                                <label class="form-check-label" for="isOpen">Shop is Open for Business</label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{{ url_for('shop.shop_dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Hours Tab -->
+        <div class="tab-pane fade" id="hours" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Business Hours</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('shop.update_shop_hours', shop_id=shop.id) }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Opening Hours</label>
+                                <input type="time" name="opening_hours" class="form-control" value="{{ shop.opening_hours or '09:00' }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Closing Hours</label>
+                                <input type="time" name="closing_hours" class="form-control" value="{{ shop.closing_hours or '21:00' }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Your shop will appear as "Open" during these hours. Customers can only place orders when the shop is open.
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Hours
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivery Settings Tab -->
+        <div class="tab-pane fade" id="delivery" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Delivery Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('shop.update_shop_delivery', shop_id=shop.id) }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Delivery Fee (R)</label>
+                                <input type="number" name="delivery_fee" class="form-control" step="0.01" value="{{ shop.delivery_fee }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Minimum Order Amount (R)</label>
+                                <input type="number" name="min_order" class="form-control" step="0.01" value="{{ shop.min_order }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Preparation Time (minutes)</label>
+                            <input type="number" name="preparation_time" class="form-control" value="{{ shop.preparation_time }}" required>
+                            <small class="text-muted">Estimated time for order preparation</small>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Delivery fees and minimum order amounts affect how customers see your shop.
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Delivery Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code Tab -->
+        <div class="tab-pane fade" id="qr" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>Shop QR Code</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="qr-code">
+                        {% if qr_code %}
+                            <img src="data:image/png;base64,{{ qr_code }}" alt="Shop QR Code">
+                            <div class="mt-3">
+                                <button class="btn btn-success" onclick="downloadQR()">
+                                    <i class="fas fa-download me-2"></i>Download QR Code
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="bg-light p-5 rounded">
+                                <i class="fas fa-qrcode fa-5x text-muted mb-3"></i>
+                                <p>Click below to generate QR code</p>
+                                <a href="{{ url_for('shop.generate_qr', shop_id=shop.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-sync-alt me-2"></i>Generate QR Code
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <p class="mt-3 text-muted">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Share this QR code with customers. They can scan it to quickly access your shop page.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Logo preview
+    document.getElementById('logoInput')?.addEventListener('change', function(e) {
+        const preview = document.getElementById('logoPreview');
+        const previewImg = document.getElementById('logoPreviewImg');
+        
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                previewImg.src = ev.target.result;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+    
+    function removeLogo() {
+        if (confirm('Remove shop logo?')) {
+            fetch('{{ url_for("shop.remove_logo", shop_id=shop.id) }}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    toastr.error(data.message);
+                }
+            })
+            .catch(error => {
+                toastr.error('Failed to remove logo');
+            });
+        }
+    }
+    
+    function downloadQR() {
+        const img = document.querySelector('.qr-code img');
+        if (img) {
+            const link = document.createElement('a');
+            link.download = 'shop_qr_{{ shop.id }}.png';
+            link.href = img.src;
+            link.click();
+        }
+    }
+</script>
+{% endblock %}

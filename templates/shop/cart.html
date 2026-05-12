@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Your Cart - {{ shop.shop_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Your Cart - {{ shop.shop_name }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if cart_items %}
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Total</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in cart_items %}
+                                    <tr id="cart-item-{{ item.id }}">
+                                        <td>
+                                            <strong>{{ item.item.name }}</strong>
+                                            {% if item.special_instructions %}
+                                                <br><small class="text-muted">{{ item.special_instructions }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ format_currency(item.item.price) }}</td>
+                                        <td>
+                                            <div class="input-group" style="width: 120px;">
+                                                <button class="btn btn-outline-secondary btn-sm update-cart" data-cart-id="{{ item.id }}" data-action="decrease">-</button>
+                                                <input type="text" class="form-control form-control-sm text-center" value="{{ item.quantity }}" readonly>
+                                                <button class="btn btn-outline-secondary btn-sm update-cart" data-cart-id="{{ item.id }}" data-action="increase">+</button>
+                                            </div>
+                                        </td>
+                                        <td class="item-total">{{ format_currency(item.item.price * item.quantity) }}</td>
+                                        <td>
+                                            <button class="btn btn-danger btn-sm update-cart" data-cart-id="{{ item.id }}" data-action="remove">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="border-top">
+                                        <td colspan="3" class="text-end fw-bold">Subtotal:</td>
+                                        <td class="fw-bold subtotal">{{ format_currency(subtotal) }}</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <a href="{{ url_for('shop.shop_detail', shop_id=shop.id) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                            </a>
+                            <a href="{{ url_for('order.checkout', shop_id=shop.id) }}" class="btn btn-primary float-end">
+                                Proceed to Checkout <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
+                            <h5>Your cart is empty</h5>
+                            <p class="text-muted">Add items from the menu to get started</p>
+                            <a href="{{ url_for('shop.shop_detail', shop_id=shop.id) }}" class="btn btn-primary">
+                                Browse Menu
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal:</span>
+                        <span class="subtotal">{{ format_currency(subtotal) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Delivery Fee:</span>
+                        <span>{{ format_currency(shop.delivery_fee) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Service Fee:</span>
+                        <span>{{ format_currency(5.00) }}</span>
+                    </div>
+                    {% if subtotal < shop.min_order %}
+                        <div class="alert alert-warning mt-2">
+                            <small>Minimum order amount is {{ format_currency(shop.min_order) }}</small>
+                        </div>
+                    {% endif %}
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total:</span>
+                        <span class="total">{{ format_currency(subtotal + shop.delivery_fee + 5) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $('.update-cart').click(function() {
+        const cartId = $(this).data('cart-id');
+        const action = $(this).data('action');
+        
+        $.ajax({
+            url: "{{ url_for('shop.update_cart') }}",
+            method: 'POST',
+            data: {
+                cart_id: cartId,
+                action: action
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (action === 'remove') {
+                        $('#cart-item-' + cartId).remove();
+                    } else {
+                        location.reload();
+                    }
+                    $('.subtotal').text(response.subtotal);
+                } else {
+                    toastr.error(response.message);
+                }
+            },
+            error: function() {
+                toastr.error('Failed to update cart');
+            }
+        });
+    });
+</script>
+{% endblock %}

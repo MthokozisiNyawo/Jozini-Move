@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Terms & Conditions - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-file-contract me-2"></i>Terms & Conditions</h4>
+                    <p class="mb-0 mt-2 small">Last updated: January 1, 2024</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        By using Jozini Move, you agree to these terms. Please read them carefully.
+                    </div>
+                    
+                    <h5>1. Acceptance of Terms</h5>
+                    <p>By accessing or using Jozini Move's services, you agree to be bound by these Terms & Conditions. If you do not agree to these terms, please do not use our services.</p>
+                    
+                    <h5>2. Description of Service</h5>
+                    <p>Jozini Move provides a platform that connects customers with local shops and delivery drivers. We facilitate ordering, payment processing, and delivery coordination but are not responsible for the quality of goods or services provided by shops.</p>
+                    
+                    <h5>3. User Accounts</h5>
+                    <p>To use our services, you must create an account. You are responsible for:</p>
+                    <ul>
+                        <li>Maintaining the confidentiality of your password</li>
+                        <li>All activities that occur under your account</li>
+                        <li>Providing accurate and complete information</li>
+                        <li>Notifying us immediately of any unauthorized use</li>
+                    </ul>
+                    
+                    <h5>4. Orders and Payments</h5>
+                    <p>When you place an order:</p>
+                    <ul>
+                        <li>You agree to pay the total amount shown at checkout</li>
+                        <li>Prices are set by shops and may change without notice</li>
+                        <li>We reserve the right to refuse or cancel any order</li>
+                        <li>Payment must be made at the time of order or upon delivery</li>
+                    </ul>
+                    
+                    <h5>5. Delivery</h5>
+                    <p>Delivery terms:</p>
+                    <ul>
+                        <li>Delivery times are estimates and not guaranteed</li>
+                        <li>You must provide an accurate delivery address</li>
+                        <li>Someone must be available to receive the delivery</li>
+                        <li>Delivery fees are non-refundable once delivery has started</li>
+                    </ul>
+                    
+                    <h5>6. Cancellations and Refunds</h5>
+                    <p>Cancellation policy:</p>
+                    <ul>
+                        <li>Orders can be cancelled before preparation begins</li>
+                        <li>Once food is being prepared, cancellation may not be possible</li>
+                        <li>Refunds are processed within 5-7 business days</li>
+                        <li>Contact support for refund requests</li>
+                    </ul>
+                    
+                    <h5>7. Driver Terms</h5>
+                    <p>For delivery drivers:</p>
+                    <ul>
+                        <li>You must have a valid driver's license and vehicle</li>
+                        <li>You are an independent contractor, not an employee</li>
+                        <li>You are responsible for your own taxes and insurance</li>
+                        <li>We reserve the right to deactivate accounts for violations</li>
+                    </ul>
+                    
+                    <h5>8. Shop Owner Terms</h5>
+                    <p>For shop owners:</p>
+                    <ul>
+                        <li>You must have a valid business license</li>
+                        <li>You are responsible for menu accuracy and pricing</li>
+                        <li>You must fulfill orders in a timely manner</li>
+                        <li>We charge a commission on each order</li>
+                    </ul>
+                    
+                    <h5>9. Prohibited Conduct</h5>
+                    <p>You may not:</p>
+                    <ul>
+                        <li>Use the service for illegal purposes</li>
+                        <li>Harass or abuse drivers, shop owners, or other users</li>
+                        <li>Attempt to hack or disrupt the platform</li>
+                        <li>Create fake accounts or manipulate ratings</li>
+                    </ul>
+                    
+                    <h5>10. Limitation of Liability</h5>
+                    <p>Jozini Move is not liable for:</p>
+                    <ul>
+                        <li>Issues with food quality from shops</li>
+                        <li>Delays caused by traffic or weather</li>
+                        <li>Indirect or consequential damages</li>
+                        <li>Amounts exceeding the total order value</li>
+                    </ul>
+                    
+                    <h5>11. Changes to Terms</h5>
+                    <p>We may modify these terms at any time. Continued use of the service constitutes acceptance of the modified terms.</p>
+                    
+                    <h5>12. Contact Information</h5>
+                    <p>For questions about these terms, contact us at:</p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-envelope me-2"></i> legal@jozinimove.co.za</li>
+                        <li><i class="fas fa-phone me-2"></i> +27 71 234 5678</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i> Jozini, KwaZulu-Natal, South Africa</li>
+                    </ul>
+                    
+                    <div class="alert alert-warning mt-4">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        These terms are legally binding. Please read carefully before using our services.
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="text-center">
+                        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

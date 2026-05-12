@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Track Refund Request #{{ refund_request.id }} - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Status Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header {% if refund_request.status == 'approved' %}bg-success{% elif refund_request.status == 'rejected' %}bg-danger{% elif refund_request.status == 'completed' %}bg-info{% else %}bg-warning{% endif %} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-ticket-alt me-2"></i>
+                            Refund Request #{{ refund_request.id }}
+                        </h5>
+                        <span class="badge bg-light text-dark">
+                            {{ refund_request.created_at.strftime('%Y-%m-%d') }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Status Timeline -->
+                    <div class="tracking-timeline mb-4">
+                        <div class="tracking-item {% if refund_request.status != 'pending' %}completed{% endif %}">
+                            <div class="tracking-marker"></div>
+                            <div class="tracking-content">
+                                <h6 class="mb-1">Request Submitted</h6>
+                                <p class="text-muted small">{{ refund_request.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                                <p>Your refund request has been received and is awaiting review.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="tracking-item {% if refund_request.status in ['approved', 'completed', 'rejected'] %}completed{% endif %}">
+                            <div class="tracking-marker"></div>
+                            <div class="tracking-content">
+                                <h6 class="mb-1">Under Review</h6>
+                                {% if refund_request.reviewed_at %}
+                                    <p class="text-muted small">{{ refund_request.reviewed_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                                {% endif %}
+                                <p>Our team is reviewing your request. This usually takes 1-2 business days.</p>
+                            </div>
+                        </div>
+                        
+                        {% if refund_request.status == 'approved' %}
+                        <div class="tracking-item completed">
+                            <div class="tracking-marker"></div>
+                            <div class="tracking-content">
+                                <h6 class="mb-1 text-success">Approved</h6>
+                                <p>Your refund has been approved! Amount will be processed within 5-7 business days.</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if refund_request.status == 'rejected' %}
+                        <div class="tracking-item">
+                            <div class="tracking-marker" style="background: #dc3545; box-shadow: 0 0 0 2px #dc3545;"></div>
+                            <div class="tracking-content">
+                                <h6 class="mb-1 text-danger">Rejected</h6>
+                                <p>{{ refund_request.admin_notes or 'Your refund request was not approved. Please contact support for more information.' }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if refund_request.status == 'completed' %}
+                        <div class="tracking-item completed">
+                            <div class="tracking-marker" style="background: #10b981;"></div>
+                            <div class="tracking-content">
+                                <h6 class="mb-1 text-success">Refund Completed</h6>
+                                <p>Refund has been processed to your {{ refund_request.refund_method }}.</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Request Details -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Order Information</h6>
+                            <p class="mb-1"><strong>Order #:</strong> {{ refund_request.order.order_number }}</p>
+                            <p class="mb-1"><strong>Shop:</strong> {{ refund_request.order.shop.shop_name }}</p>
+                            <p class="mb-1"><strong>Order Date:</strong> {{ refund_request.order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                            <p class="mb-0"><strong>Order Total:</strong> {{ format_currency(refund_request.order.grand_total) }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Refund Details</h6>
+                            <p class="mb-1"><strong>Reason:</strong> {{ refund_request.reason|replace('_', ' ')|title }}</p>
+                            <p class="mb-1"><strong>Amount:</strong> {{ format_currency(refund_request.amount) }}</p>
+                            <p class="mb-1"><strong>Method:</strong> {{ refund_request.refund_method|title }}</p>
+                            <p class="mb-0"><strong>Status:</strong> 
+                                <span class="badge bg-{% if refund_request.status == 'pending' %}warning{% elif refund_request.status == 'approved' %}success{% elif refund_request.status == 'rejected' %}danger{% else %}info{% endif %}">
+                                    {{ refund_request.status|title }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <h6>Issue Description</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ refund_request.description }}
+                        </div>
+                    </div>
+                    
+                    <!-- Evidence -->
+                    {% if refund_request.evidence %}
+                    <div class="mb-4">
+                        <h6>Evidence Attached</h6>
+                        <div class="d-flex gap-2">
+                            {% for image in refund_request.evidence.split(',') %}
+                                <a href="{{ url_for('static', filename='uploads/refunds/' + image) }}" target="_blank">
+                                    <img src="{{ url_for('static', filename='uploads/refunds/' + image) }}" class="preview-image" style="width: 80px; height: 80px; object-fit: cover;">
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Admin Notes -->
+                    {% if refund_request.admin_notes %}
+                    <div class="alert alert-info">
+                        <strong><i class="fas fa-comment me-2"></i>Admin Note:</strong>
+                        <p class="mb-0 mt-2">{{ refund_request.admin_notes }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('main.refund_request') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Requests
+                        </a>
+                        {% if refund_request.status == 'rejected' %}
+                            <a href="{{ url_for('main.contact') }}" class="btn btn-warning">
+                                <i class="fas fa-headset me-2"></i>Contact Support
+                            </a>
+                        {% endif %}
+                        <button onclick="window.print()" class="btn btn-secondary">
+                            <i class="fas fa-print me-2"></i>Print Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tracking-timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .tracking-item {
+        position: relative;
+        padding-bottom: 25px;
+    }
+    .tracking-marker {
+        position: absolute;
+        left: -30px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #0d6efd;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px #0d6efd;
+        z-index: 1;
+    }
+    .tracking-item.completed .tracking-marker {
+        background: #10b981;
+        box-shadow: 0 0 0 2px #10b981;
+    }
+    .tracking-item:not(:last-child) .tracking-marker::after {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 12px;
+        width: 2px;
+        height: calc(100% + 5px);
+        background: #dee2e6;
+    }
+    .tracking-content {
+        padding-left: 15px;
+    }
+    .preview-image {
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+    }
+    .preview-image:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}

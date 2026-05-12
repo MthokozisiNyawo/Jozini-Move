@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Order Details - {{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Order #{{ order.order_number }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Customer Information</h6>
+                            <p><strong>Name:</strong> {{ order.customer.name }}</p>
+                            <p><strong>Phone:</strong> {{ order.customer.phone }}</p>
+                            <p><strong>Email:</strong> {{ order.customer.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Shop Information</h6>
+                            <p><strong>Name:</strong> {{ order.shop.shop_name if order.shop else 'N/A' }}</p>
+                            <p><strong>Phone:</strong> {{ order.shop.phone if order.shop else 'N/A' }}</p>
+                            <p><strong>Address:</strong> {{ order.shop.address if order.shop else 'N/A' }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Delivery Information</h6>
+                            <p><strong>Address:</strong> {{ order.delivery_address }}</p>
+                            <p><strong>Zone:</strong> {{ order.delivery_zone|replace('_', ' ')|title }}</p>
+                            <p><strong>Driver:</strong> {{ order.driver.name if order.driver else 'Not assigned' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Payment Information</h6>
+                            <p><strong>Method:</strong> {{ order.payment_method|title }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{{ 'success' if order.payment_status == 'paid' else 'warning' }}">
+                                    {{ order.payment_status|title }}
+                                </span>
+                            </p>
+                            <p><strong>Transaction ID:</strong> {{ order.payment_transaction_id or 'N/A' }}</p>
+                        </div>
+                    </div>
+                    
+                    <h6>Items Ordered</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                                                                <td>{{ item.quantity }}</td>
+                                            <td>{{ format_currency(item.price) }}</td>
+                                            <td>{{ format_currency(item.total) }}</td>
+                                        </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                                    <td>{{ format_currency(order.total_amount) }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Delivery Fee:</strong></td>
+                                    <td>{{ format_currency(order.delivery_fee) }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Service Fee:</strong></td>
+                                    <td>{{ format_currency(order.service_fee) }}</td>
+                                </tr>
+                                <tr class="border-top">
+                                    <td colspan="3" class="text-end fw-bold"><strong>Grand Total:</strong></td>
+                                    <td class="fw-bold">{{ format_currency(order.grand_total) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    {% if order.order_notes %}
+                        <div class="alert alert-info">
+                            <strong>Special Instructions:</strong><br>
+                            {{ order.order_notes }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Status Timeline -->
+                    <h6>Order Timeline</h6>
+                    <div class="timeline">
+                        {% for status in status_history %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">{{ status.status|replace('_', ' ')|title }}</h6>
+                                    <p class="text-muted small mb-1">{{ status.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                                    {% if status.notes %}
+                                        <p class="mb-0">{{ status.notes }}</p>
+                                    {% endif %}
+                                    {% if status.user %}
+                                        <small class="text-muted">By: {{ status.user.name }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Order Status Update -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Update Status</h5>
+                </div>
+                <div class="card-body">
+                    <form id="updateStatusForm">
+                        <select id="orderStatus" class="form-select mb-3">
+                            <option value="pending" {% if order.order_status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="confirmed" {% if order.order_status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                            <option value="preparing" {% if order.order_status == 'preparing' %}selected{% endif %}>Preparing</option>
+                            <option value="ready" {% if order.order_status == 'ready' %}selected{% endif %}>Ready for Pickup</option>
+                            <option value="picked_up" {% if order.order_status == 'picked_up' %}selected{% endif %}>Picked Up</option>
+                            <option value="in_transit" {% if order.order_status == 'in_transit' %}selected{% endif %}>In Transit</option>
+                            <option value="delivered" {% if order.order_status == 'delivered' %}selected{% endif %}>Delivered</option>
+                            <option value="cancelled" {% if order.order_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                        <textarea id="statusNotes" class="form-control mb-3" rows="3" placeholder="Add notes (optional)"></textarea>
+                        <button type="button" class="btn btn-primary w-100" onclick="updateOrderStatus()">
+                            <i class="fas fa-save"></i> Update Status
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Order Actions -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Actions</h5>
+                </div>
+                <div class="card-body">
+                    {% if order.order_status not in ['delivered', 'cancelled'] %}
+                        <button class="btn btn-danger w-100 mb-2" onclick="cancelOrder()">
+                            <i class="fas fa-times"></i> Cancel Order
+                        </button>
+                    {% endif %}
+                    <a href="{{ url_for('admin.orders') }}" class="btn btn-secondary w-100">
+                        <i class="fas fa-arrow-left"></i> Back to Orders
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .timeline-item {
+        position: relative;
+        padding-bottom: 25px;
+    }
+    .timeline-marker {
+        position: absolute;
+        left: -30px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #0d6efd;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px #0d6efd;
+    }
+    .timeline-item:not(:last-child) .timeline-marker::after {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 12px;
+        width: 2px;
+        height: calc(100% + 5px);
+        background: #dee2e6;
+    }
+    .timeline-content {
+        padding-left: 15px;
+    }
+</style>
+
+<script>
+function updateOrderStatus() {
+    const status = $('#orderStatus').val();
+    const notes = $('#statusNotes').val();
+    
+    $.ajax({
+        url: "{{ url_for('api.update_order_status', order_number=order.order_number) }}",
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            status: status,
+            notes: notes
+        }),
+        success: function(response) {
+            if (response.success) {
+                toastr.success(response.message);
+                location.reload();
+            } else {
+                toastr.error(response.message);
+            }
+        },
+        error: function() {
+            toastr.error('Failed to update order status');
+        }
+    });
+}
+
+function cancelOrder() {
+    if (confirm('Are you sure you want to cancel this order?')) {
+        $.ajax({
+            url: "{{ url_for('api.update_order_status', order_number=order.order_number) }}",
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                status: 'cancelled',
+                notes: 'Order cancelled by admin'
+            }),
+            success: function(response) {
+                if (response.success) {
+                    toastr.success('Order cancelled successfully');
+                    location.reload();
+                } else {
+                    toastr.error(response.message);
+                }
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
+                                    

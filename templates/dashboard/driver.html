@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}Driver Dashboard - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Stats Cards -->
+        <div class="col-12">
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title">Today's Deliveries</h6>
+                            <h2 class="mb-0">{{ today_deliveries }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title">Today's Earnings</h6>
+                            <h2 class="mb-0">{{ format_currency(today_earnings) }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Deliveries</h6>
+                            <h2 class="mb-0">{{ total_deliveries }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Earnings</h6>
+                            <h2 class="mb-0">{{ format_currency(total_earnings) }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Available Orders -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Available Orders</h6>
+                </div>
+                <div class="card-body">
+                    {% if available_orders %}
+                        <div class="list-group">
+                            {% for order in available_orders %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">Order #{{ order.order_number }}</h6>
+                                            <p class="mb-1 small">
+                                                <strong>{{ order.shop.shop_name }}</strong><br>
+                                                {{ order.delivery_address }}
+                                            </p>
+                                            <div>
+                                                <span class="badge bg-primary">R {{ "%.2f"|format(order.delivery_fee) }} delivery fee</span>
+                                                <span class="badge bg-info">{{ order.delivery_zone|replace('_', ' ')|title }}</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-primary btn-sm accept-order" data-order="{{ order.order_number }}">
+                                                <i class="fas fa-check"></i> Accept
+                                            </button>
+                                            <a href="{{ url_for('driver.order_details', order_number=order.order_number) }}" class="btn btn-outline-secondary btn-sm">
+                                                <i class="fas fa-eye"></i> Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
+                            <p>No available orders at the moment</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Active Orders (Picked Up) -->
+            {% if active_orders %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning">
+                    <h6 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>Ready to Deliver (Picked Up)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for order in active_orders %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Order #{{ order.order_number }}</h6>
+                                        <p class="mb-1 small">
+                                            <strong>{{ order.shop.shop_name }}</strong><br>
+                                            {{ order.delivery_address }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-success btn-sm start-delivery" data-order="{{ order.order_number }}">
+                                            <i class="fas fa-play"></i> Start Delivery
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- In Transit Orders -->
+            {% if in_transit_orders %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-truck me-2"></i>In Transit</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for order in in_transit_orders %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">Order #{{ order.order_number }}</h6>
+                                        <p class="mb-1 small">{{ order.delivery_address }}</p>
+                                        <small class="text-muted">Delivery PIN: <code>{{ order.delivery_pin }}</code></small>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-success btn-sm complete-delivery" data-order="{{ order.order_number }}">
+                                            <i class="fas fa-check-circle"></i> Complete Delivery
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Earnings Chart -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Weekly Earnings</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="earningsChart" height="200"></canvas>
+                </div>
+            </div>
+            
+            <!-- Driver Rating -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">My Rating</h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="display-1 text-warning">
+                        {{ "%.1f"|format(avg_rating) }}
+                    </div>
+                    <div class="text-warning mb-2">
+                        {% for i in range(avg_rating|int) %}★{% endfor %}
+                        {% for i in range(5 - avg_rating|int) %}☆{% endfor %}
+                    </div>
+                    <p class="text-muted small">Based on {{ total_deliveries }} deliveries</p>
+                    <a href="{{ url_for('driver.earnings') }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-chart-line"></i> View Full Earnings Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delivery PIN Modal -->
+<div class="modal fade" id="pinModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Enter Delivery PIN</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Please ask the customer for the 4-digit delivery PIN to complete this order.</p>
+                <input type="text" id="deliveryPin" class="form-control text-center" placeholder="Enter 4-digit PIN" maxlength="4" pattern="[0-9]{4}">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmDelivery">Confirm Delivery</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let currentOrderNumber = null;
+    
+    // Weekly earnings chart
+    const ctx = document.getElementById('earningsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ weekly_stats|map(attribute='date')|list|tojson }},
+            datasets: [{
+                label: 'Earnings (R)',
+                data: {{ weekly_stats|map(attribute='earnings')|list|tojson }},
+                backgroundColor: '#0d6efd',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Accept order
+    $('.accept-order').click(function() {
+        const orderNumber = $(this).data('order');
+        $.ajax({
+            url: "{{ url_for('driver.accept_order', order_number='') }}" + orderNumber,
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    location.reload();
+                } else {
+                    toastr.error(response.message);
+                }
+            },
+            error: function() {
+                toastr.error('Failed to accept order');
+            }
+        });
+    });
+    
+    // Start delivery
+    $('.start-delivery').click(function() {
+        const orderNumber = $(this).data('order');
+        $.ajax({
+            url: "{{ url_for('driver.start_delivery', order_number='') }}" + orderNumber,
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    location.reload();
+                } else {
+                    toastr.error(response.message);
+                }
+            },
+            error: function() {
+                toastr.error('Failed to start delivery');
+            }
+        });
+    });
+    
+    // Complete delivery with PIN
+    $('.complete-delivery').click(function() {
+        currentOrderNumber = $(this).data('order');
+        $('#pinModal').modal('show');
+    });
+    
+    $('#confirmDelivery').click(function() {
+        const pin = $('#deliveryPin').val();
+        if (!pin || pin.length !== 4) {
+            toastr.error('Please enter a valid 4-digit PIN');
+            return;
+        }
+        
+        $.ajax({
+            url: "{{ url_for('driver.complete_delivery', order_number='') }}" + currentOrderNumber,
+            method: 'POST',
+            data: JSON.stringify({ delivery_pin: pin }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    $('#pinModal').modal('hide');
+                    location.reload();
+                } else {
+                    toastr.error(response.message);
+                }
+            },
+            error: function() {
+                toastr.error('Failed to complete delivery');
+            }
+        });
+    });
+</script>
+{% endblock %}

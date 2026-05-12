@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}{{ shop.shop_name }} - Jozini Move{% endblock %}
+
+{% block extra_css %}
+<style>
+    .item-card {
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    .item-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .item-image {
+        height: 180px;
+        object-fit: cover;
+        width: 100%;
+        transition: transform 0.3s ease;
+    }
+    .item-card:hover .item-image {
+        transform: scale(1.05);
+    }
+    .no-image {
+        height: 180px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .no-image i {
+        font-size: 48px;
+        color: #adb5bd;
+    }
+    .price-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: linear-gradient(135deg, #0d6efd, #10b981);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+    }
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-block;
+    }
+    .status-available { background: #198754; color: white; }
+    .status-unavailable { background: #dc3545; color: white; }
+    .status-badge-sm {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+    .delete-btn, .edit-btn {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .delete-btn:hover, .edit-btn:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Shop Header -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    {% if shop.logo %}
+                        <img src="{{ url_for('static', filename='uploads/logos/' + shop.logo) }}" alt="{{ shop.shop_name }}" class="rounded-circle" width="100" height="100" style="object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                            <i class="fas fa-store fa-3x text-primary"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col">
+                    <h2 class="mb-2">{{ shop.shop_name }}</h2>
+                    <div class="mb-2">
+                        <span class="text-warning">
+                            {% for i in range(shop.rating|int) %}★{% endfor %}
+                            {% for i in range(5 - shop.rating|int) %}☆{% endfor %}
+                        </span>
+                        <span class="text-muted">({{ shop.rating_count }} ratings)</span>
+                        <span class="badge bg-info ms-2">{{ shop.category|title }}</span>
+                    </div>
+                    <p class="mb-2 text-muted"><i class="fas fa-map-marker-alt me-2"></i>{{ shop.address }}</p>
+                    <p class="mb-2"><i class="fas fa-clock me-2"></i>{{ shop.opening_hours }} - {{ shop.closing_hours }}</p>
+                    <div class="mt-2">
+                        <span class="badge bg-success">Min Order: {{ format_currency(shop.min_order) }}</span>
+                        <span class="badge bg-primary ms-2">Delivery: {{ format_currency(shop.delivery_fee) }}</span>
+                        {% if not shop.is_open %}
+                            <span class="badge bg-danger ms-2">Currently Closed</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('shop.view_cart', shop_id=shop.id) }}" class="btn btn-primary position-relative">
+                        <i class="fas fa-shopping-cart me-2"></i>View Cart
+                        {% if cart_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ cart_count }}
+                            </span>
+                        {% endif %}
+                    </a>
+                    {% if current_user.is_shop_owner() and current_user.id == shop.owner_id %}
+                        <a href="{{ url_for('shop.add_item', shop_id=shop.id) }}" class="btn btn-success mt-2 w-100">
+                            <i class="fas fa-plus me-2"></i>Add New Item
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Menu Items -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card shadow-sm sticky-top" style="top: 90px;">
+                <div class="card-body">
+                    <h6 class="mb-3">Menu Categories</h6>
+                    <div class="list-group list-group-flush">
+                        {% for category in items_by_category.keys() %}
+                            <a href="#category-{{ loop.index }}" class="list-group-item list-group-item-action category-link">
+                                {{ category }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            {% for category, items in items_by_category.items() %}
+            <div id="category-{{ loop.index }}" class="mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">{{ category }}</h4>
+                    {% if current_user.is_shop_owner() and current_user.id == shop.owner_id %}
+                        <span class="badge bg-secondary">{{ items|length }} items</span>
+                    {% endif %}
+                </div>
+                <div class="row g-4">
+                    {% for item in items %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card border-0 shadow-sm item-card h-100" data-item-id="{{ item.id }}">
+                            <!-- Item Image -->
+                            <div class="position-relative">
+                                {% if item.image %}
+                                    <img src="{{ url_for('static', filename='uploads/items/' + item.image) }}" 
+                                         class="card-img-top item-image" 
+                                         alt="{{ item.name }}"
+                                         onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/no-image.png') }}'">
+                                {% else %}
+                                    <div class="no-image">
+                                        <i class="fas fa-utensils"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="price-badge">
+                                    {{ format_currency(item.price) }}
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">{{ item.name }}</h6>
+                                    <span class="status-badge status-badge-sm status-{{ 'available' if item.available else 'unavailable' }}">
+                                        {{ 'Available' if item.available else 'Unavailable' }}
+                                    </span>
+                                </div>
+                                <p class="text-muted small mb-2">{{ item.description or 'No description available' }}</p>
+                                {% if item.preparation_time %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> {{ item.preparation_time }} min
+                                    </small>
+                                {% endif %}
+                                {% if item.stock_quantity != -1 %}
+                                    <small class="text-muted d-block mt-1">Stock: {{ item.stock_quantity }} left</small>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-transparent border-0 pb-3">
+                                {% if current_user.is_shop_owner() and current_user.id == shop.owner_id %}
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ url_for('shop.edit_item', item_id=item.id) }}" class="btn btn-warning btn-sm flex-grow-1 edit-btn">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <button type="button" class="btn btn-danger btn-sm delete-item-btn" 
+                                                data-item-id="{{ item.id }}" 
+                                                data-item-name="{{ item.name }}">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                {% elif shop.is_open and item.available %}
+                                    <button type="button" class="btn btn-primary btn-sm w-100 add-to-cart" data-item-id="{{ item.id }}">
+                                        <i class="fas fa-cart-plus"></i> Add to Cart
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-secondary btn-sm w-100" disabled>
+                                        <i class="fas fa-times"></i> Unavailable
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Quantity Modal -->
+<div class="modal fade" id="quantityModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Select Quantity</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="number" id="itemQuantity" class="form-control" value="1" min="1" max="99">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAddToCart">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="deleteItemName"></strong>?</p>
+                <p class="text-danger">This action cannot be undone. This item will be permanently removed from your menu.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Menu page loaded");
+    
+    // Add to cart functionality
+    const addToCartButtons = document.querySelectorAll('.add-to-cart');
+    let selectedItemId = null;
+    
+    addToCartButtons.forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            selectedItemId = this.getAttribute('data-item-id');
+            console.log("Add to cart clicked for item:", selectedItemId);
+            const quantityModal = new bootstrap.Modal(document.getElementById('quantityModal'));
+            quantityModal.show();
+        });
+    });
+    
+    document.getElementById('confirmAddToCart')?.addEventListener('click', function() {
+        const quantity = document.getElementById('itemQuantity').value;
+        
+        fetch('/shop/add-to-cart', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                item_id: selectedItemId,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                toastr.success(data.message);
+                bootstrap.Modal.getInstance(document.getElementById('quantityModal')).hide();
+                setTimeout(() => location.reload(), 500);
+            } else {
+                toastr.error(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            toastr.error('Failed to add item to cart');
+        });
+    });
+    
+    // Delete item functionality
+    const deleteButtons = document.querySelectorAll('.delete-item-btn');
+    let deleteItemId = null;
+    
+    deleteButtons.forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            deleteItemId = this.getAttribute('data-item-id');
+            const itemName = this.getAttribute('data-item-name');
+            document.getElementById('deleteItemName').textContent = itemName;
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            deleteModal.show();
+        });
+    });
+    
+    document.getElementById('confirmDeleteBtn')?.addEventListener('click', function() {
+        if (deleteItemId) {
+            fetch('/shop/delete-item/' + deleteItemId, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: 'item_id=' + deleteItemId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    toastr.success('Item deleted successfully');
+                    location.reload();
+                } else {
+                    toastr.error(data.message || 'Failed to delete item');
+                }
+                bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                toastr.error('Failed to delete item');
+            });
+        }
+    });
+    
+    // Category links smooth scroll
+    document.querySelectorAll('.category-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = this.getAttribute('href');
+            const element = document.querySelector(target);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

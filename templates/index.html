@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Jozini Move - Fast & Reliable Local Delivery{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-primary text-white py-5" style="background: linear-gradient(135deg, #0d6efd, #0a58ca);">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6" data-aos="fade-right">
+                <h1 class="display-4 fw-bold mb-4">Fast & Reliable Delivery in Jozini</h1>
+                <p class="lead mb-4">Order from your favorite local shops and get delivered to your doorstep. Join thousands of satisfied customers in Jozini and surrounding areas.</p>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('shop.browse') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-shopping-bag me-2"></i>Order Now
+                    </a>
+                    {% if not current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left">
+                <img src="{{ url_for('static', filename='img/hero-delivery.svg') }}" alt="Delivery" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-3" data-aos="zoom-in">
+                <div class="display-4 fw-bold text-primary">{{ total_shops|default(50) }}+</div>
+                <p class="text-muted">Local Shops</p>
+            </div>
+            <div class="col-md-3 mb-3" data-aos="zoom-in" data-aos-delay="100">
+                <div class="display-4 fw-bold text-primary">{{ total_drivers|default(30) }}+</div>
+                <p class="text-muted">Delivery Drivers</p>
+            </div>
+            <div class="col-md-3 mb-3" data-aos="zoom-in" data-aos-delay="200">
+                <div class="display-4 fw-bold text-primary">{{ total_deliveries|default(5000) }}+</div>
+                <p class="text-muted">Happy Deliveries</p>
+            </div>
+            <div class="col-md-3 mb-3" data-aos="zoom-in" data-aos-delay="300">
+                <div class="display-4 fw-bold text-primary">30-45</div>
+                <p class="text-muted">Minutes Delivery</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5" data-aos="fade-up">Shop by Category</h2>
+        <div class="row g-4">
+            {% for category in categories[:8] %}
+            <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="{{ loop.index * 50 }}">
+                <a href="{{ url_for('shop.browse', category=category[0]) }}" class="text-decoration-none">
+                    <div class="card text-center border-0 shadow-sm card-hover">
+                        <div class="card-body py-4">
+                            <i class="fas fa-{{ get_category_icon(category[0]) }} fa-3x text-primary mb-3"></i>
+                            <h6 class="mb-0">{{ category[0]|title }}</h6>
+                            <small class="text-muted">{{ category[1] }} shops</small>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Shops -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5" data-aos="fade-up">Featured Shops</h2>
+        <div class="row g-4">
+            {% for shop in featured_shops %}
+            <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                <a href="{{ url_for('shop.shop_detail', shop_id=shop.id) }}" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm card-hover">
+                        <div class="card-img-top text-center pt-4 bg-light">
+                            {% if shop.logo %}
+                                <img src="{{ url_for('static', filename='uploads/logos/' + shop.logo) }}" alt="{{ shop.shop_name }}" class="rounded-circle" width="100" height="100" style="object-fit: cover;">
+                            {% else %}
+                                <i class="fas fa-store fa-4x text-primary"></i>
+                            {% endif %}
+                        </div>
+                        <div class="card-body text-center">
+                            <h6 class="mb-1">{{ shop.shop_name }}</h6>
+                            <div class="text-warning mb-2">
+                                {% for i in range(shop.rating|int) %}★{% endfor %}
+                                {% for i in range(5 - shop.rating|int) %}☆{% endfor %}
+                                <small class="text-muted">({{ shop.rating_count }})</small>
+                            </div>
+                            <small class="text-muted">{{ shop.category|title }}</small>
+                            <div class="mt-2">
+                                <span class="badge bg-success">Open</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-5">
+            <a href="{{ url_for('shop.browse') }}" class="btn btn-outline-primary btn-lg">View All Shops</a>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5" data-aos="fade-up">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="0">
+                <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-search fa-3x text-white"></i>
+                </div>
+                <h5>1. Browse Shops</h5>
+                <p class="text-muted">Explore local shops and find what you need</p>
+            </div>
+            <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="100">
+                <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-shopping-cart fa-3x text-white"></i>
+                </div>
+                <h5>2. Place Order</h5>
+                <p class="text-muted">Add items to cart and checkout</p>
+            </div>
+            <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="200">
+                <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i class="fas fa-truck fa-3x text-white"></i>
+                </div>
+                <h5>3. Get Delivered</h5>
+                <p class="text-muted">Track your order and receive at your doorstep</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Mobile App Banner -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8" data-aos="fade-right">
+                <h2 class="mb-3">Coming Soon to Mobile!</h2>
+                <p class="lead mb-4">Get the Jozini Move app for faster ordering and real-time tracking.</p>
+                <div class="d-flex gap-3">
+                    <img src="{{ url_for('static', filename='img/app-store-badge.svg') }}" alt="App Store" height="50">
+                    <img src="{{ url_for('static', filename='img/google-play-badge.svg') }}" alt="Google Play" height="50">
+                </div>
+            </div>
+            <div class="col-lg-4 text-center" data-aos="fade-left">
+                <i class="fas fa-mobile-alt fa-6x"></i>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        position: relative;
+        overflow: hidden;
+    }
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+        background-size: cover;
+        opacity: 0.1;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Category icons mapping
+    const categoryIcons = {
+        'restaurant': 'utensils',
+        'butchery': 'drumstick-bite',
+        'grocery': 'shopping-basket',
+        'pharmacy': 'capsules',
+        'hardware': 'tools',
+        'clothing': 'tshirt',
+        'electronics': 'mobile-alt'
+    };
+</script>
+{% endblock %}

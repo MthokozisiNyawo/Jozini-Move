@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Shops - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-store me-2"></i>Shop Management</h5>
+                    <div>
+                        <span class="badge bg-light text-dark me-2">Total: {{ shops.total }}</span>
+                        <span class="badge bg-warning me-2">Pending: {{ pending_shops }}</span>
+                        <span class="badge bg-success me-2">Active: {{ active_shops }}</span>
+                        <span class="badge bg-danger">Suspended: {{ suspended_shops }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Filters -->
+                    <form method="GET" class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <input type="text" name="search" class="form-control" placeholder="Search by shop name or address..." value="{{ search }}">
+                        </div>
+                        <div class="col-md-3">
+                            <select name="status" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                                <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Suspended</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="category" class="form-select">
+                                <option value="">All Categories</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat[0] }}" {% if category == cat[0] %}selected{% endif %}>{{ cat[0]|title }} ({{ cat[1] }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Filter
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Shops Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Logo</th>
+                                    <th>Shop Name</th>
+                                    <th>Owner</th>
+                                    <th>Category</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shop in shops.items %}
+                                <tr>
+                                    <td>{{ shop.id }}</td>
+                                    <td>
+                                        {% if shop.logo %}
+                                            <img src="{{ url_for('static', filename='uploads/logos/' + shop.logo) }}" class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                                        {% else %}
+                                            <i class="fas fa-store fa-2x text-muted"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ shop.shop_name }}</strong><br>
+                                        <small class="text-muted">{{ shop.address[:50] }}...</small>
+                                    </td>
+                                    <td>
+                                        {{ shop.owner.name }}<br>
+                                        <small>{{ shop.owner.phone }}</small>
+                                    </td>
+                                    <td><span class="badge bg-info">{{ shop.category|title }}</span></td>
+                                    <td>{{ shop.phone }}</td>
+                                    <td>
+                                        {% if shop.status == 'active' %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% elif shop.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Suspended</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ shop.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin.shop_detail', shop_id=shop.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if shop.status == 'pending' %}
+                                            <button class="btn btn-sm btn-success approve-shop" data-shop-id="{{ shop.id }}">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        {% endif %}
+                                        {% if shop.status == 'active' %}
+                                            <button class="btn btn-sm btn-danger suspend-shop" data-shop-id="{{ shop.id }}">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        {% endif %}
+                                        {% if shop.status == 'suspended' %}
+                                            <button class="btn btn-sm btn-success approve-shop" data-shop-id="{{ shop.id }}">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="9" class="text-center py-4">
+                                        <i class="fas fa-store-slash fa-3x text-muted mb-2"></i>
+                                        <p>No shops found</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if shops.pages > 1 %}
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            {% if shops.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.shops', page=shops.prev_num, search=search, status=status_filter, category=category) }}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page in shops.iter_pages() %}
+                                {% if page %}
+                                    <li class="page-item {% if page == shops.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('admin.shops', page=page, search=search, status=status_filter, category=category) }}">{{ page }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if shops.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.shops', page=shops.next_num, search=search, status=status_filter, category=category) }}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('.approve-shop').click(function() {
+        const shopId = $(this).data('shop-id');
+        if (confirm('Approve this shop?')) {
+            $.ajax({
+                url: "{{ url_for('admin.approve_shop', shop_id=0) }}".replace('/0', '/' + shopId),
+                method: 'POST',
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        location.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                }
+            });
+        }
+    });
+    
+    $('.suspend-shop').click(function() {
+        const shopId = $(this).data('shop-id');
+        if (confirm('Suspend this shop? This will prevent them from accepting orders.')) {
+            $.ajax({
+                url: "{{ url_for('admin.suspend_shop', shop_id=0) }}".replace('/0', '/' + shopId),
+                method: 'POST',
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        location.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

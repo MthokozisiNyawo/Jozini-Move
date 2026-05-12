@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>Create Your Account</h4>
+                    <p class="mb-0 mt-2">Join Jozini Move today!</p>
+                </div>
+                <div class="card-body p-5">
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Full Name</label>
+                                {{ form.name(class="form-control", placeholder="Enter your full name") }}
+                                {% for error in form.name.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                {{ form.phone(class="form-control", placeholder="0712345678") }}
+                                {% for error in form.phone.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            {{ form.email(class="form-control", placeholder="you@example.com") }}
+                            {% for error in form.email.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            {{ form.address(class="form-control", rows="2", placeholder="Your delivery address") }}
+                            {% for error in form.address.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="user_type" class="form-label">I want to...</label>
+                            {{ form.user_type(class="form-select", id="user_type") }}
+                            {% for error in form.user_type.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div id="driver_fields" class="mb-3" style="display: none;">
+                            <label for="vehicle" class="form-label">Vehicle Type</label>
+                            {{ form.vehicle(class="form-control", placeholder="e.g., Car, Motorcycle, Bicycle") }}
+                        </div>
+                        
+                        <div id="shop_fields" class="mb-3" style="display: none;">
+                            <label for="shop_category" class="form-label">Shop Category</label>
+                            {{ form.shop_category(class="form-control", placeholder="e.g., Restaurant, Grocery, Butchery") }}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                {{ form.password(class="form-control", placeholder="Minimum 6 characters") }}
+                                {% for error in form.password.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="confirm_password" class="form-label">Confirm Password</label>
+                                {{ form.confirm_password(class="form-control", placeholder="Confirm your password") }}
+                                {% for error in form.confirm_password.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="{{url_for('main.terms')}}">Terms & Conditions</a> and <a href="{{url_for('main.privacy')}}">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Already have an account? 
+                            <a href="{{ url_for('auth.login') }}" class="text-decoration-none">Login Here</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show/hide conditional fields based on user type
+    document.getElementById('user_type').addEventListener('change', function() {
+        const driverFields = document.getElementById('driver_fields');
+        const shopFields = document.getElementById('shop_fields');
+        
+        if (this.value === 'driver') {
+            driverFields.style.display = 'block';
+            shopFields.style.display = 'none';
+        } else if (this.value === 'shop_owner') {
+            driverFields.style.display = 'none';
+            shopFields.style.display = 'block';
+        } else {
+            driverFields.style.display = 'none';
+            shopFields.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,485 @@
+{% extends "base.html" %}
+
+{% block title %}Shop Analytics - {{ selected_shop.shop_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #0d6efd, #10b981);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-top: 5px;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .filter-bar {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .table-img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .rating-stars {
+        color: #ffc107;
+    }
+    .btn-export {
+        transition: all 0.3s ease;
+    }
+    .btn-export:hover {
+        transform: translateY(-2px);
+    }
+    
+    @media print {
+        .filter-bar, .btn-export, .nav, .footer, .navbar, .shop-selector, .no-print {
+            display: none !important;
+        }
+        .stat-card {
+            break-inside: avoid;
+        }
+        .chart-container {
+            break-inside: avoid;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        .container-fluid {
+            padding: 0;
+        }
+        .card {
+            border: 1px solid #ddd;
+            box-shadow: none;
+        }
+        .card-header {
+            background: #f8f9fa !important;
+            color: #000 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-chart-line me-2"></i>Shop Analytics
+                </h2>
+                <div class="d-flex gap-2">
+                    {% if shops|length > 1 %}
+                    <div class="shop-selector">
+                        <select id="shopSelector" class="form-select" style="width: 200px;" onchange="window.location.href='?shop_id='+this.value+'&days={{ days }}&period={{ period }}'">
+                            {% for shop in shops %}
+                                <option value="{{ shop.id }}" {% if selected_shop and selected_shop.id == shop.id %}selected{% endif %}>
+                                    {{ shop.shop_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="dropdown no-print">
+                        <button class="btn btn-success dropdown-toggle btn-export" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-download me-2"></i>Export Report
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('shop.export_analytics', format='csv', shop_id=selected_shop.id, days=days, period=period) }}">
+                                    <i class="fas fa-file-csv me-2"></i>Export as CSV
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('shop.export_analytics', format='pdf', shop_id=selected_shop.id, days=days, period=period) }}">
+                                    <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="window.print(); return false;">
+                                    <i class="fas fa-print me-2"></i>Print Report
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filter Bar -->
+            <div class="filter-bar no-print">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label class="form-label mb-0">Period Type</label>
+                        <select id="periodSelect" class="form-select" onchange="window.location.href='?shop_id={{ selected_shop.id }}&days='+document.getElementById('daysSelect').value+'&period='+this.value">
+                            <option value="daily" {% if period == 'daily' %}selected{% endif %}>Daily</option>
+                            <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Monthly</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label mb-0">Date Range</label>
+                        <select id="daysSelect" class="form-select" onchange="window.location.href='?shop_id={{ selected_shop.id }}&days='+this.value+'&period={{ period }}'">
+                            <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                            <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                            <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                            <option value="365" {% if days == 365 %}selected{% endif %}>Last year</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>
+                            Showing data from last {{ days }} days
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_orders }}</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ format_currency(total_revenue) }}</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_customers }}</div>
+                        <div class="stat-label">Unique Customers</div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ "%.1f"|format(avg_rating) }}</div>
+                        <div class="stat-label">Average Rating</div>
+                        <div class="rating-stars mt-1">
+                            {% for i in range(avg_rating|int) %}★{% endfor %}
+                            {% for i in range(5 - avg_rating|int) %}☆{% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Revenue Chart -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Revenue Trend</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Orders Chart -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Order Trend</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="ordersChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Order Status Distribution -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Order Status Distribution</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 250px;">
+                                <canvas id="statusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Hourly Order Distribution -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Orders by Hour</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 250px;">
+                                <canvas id="hourlyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Popular Items -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-fire me-2"></i>Top Selling Items</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Item Name</th>
+                                    <th>Price</th>
+                                    <th>Quantity Sold</th>
+                                    <th>Revenue Generated</th>
+                                 </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in popular_items %}
+                                <tr>
+                                    <td>
+                                        {% if item.image %}
+                                            <img src="{{ url_for('static', filename='uploads/items/' + item.image) }}" class="table-img" alt="{{ item.name }}">
+                                        {% else %}
+                                            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-utensils text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ item.name }}</strong></td>
+                                    <td>{{ format_currency(item.price) }}</td>
+                                    <td><span class="badge bg-primary">{{ item.total_sold }}</span></td>
+                                    <td class="text-success fw-bold">{{ format_currency(item.total_revenue) }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-box-open fa-3x text-muted mb-2"></i>
+                                        <p>No items sold yet</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Customers -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-crown me-2"></i>Top Customers</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Contact</th>
+                                    <th>Orders</th>
+                                    <th>Total Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in top_customers %}
+                                <tr>
+                                    <td><strong>{{ customer.name }}</strong></td>
+                                    <td>{{ customer.phone }}<br><small class="text-muted">{{ customer.email }}</small></td>
+                                    <td><span class="badge bg-info">{{ customer.order_count }}</span></td>
+                                    <td class="text-success fw-bold">{{ format_currency(customer.total_spent) }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <i class="fas fa-users fa-3x text-muted mb-2"></i>
+                                        <p>No customers yet</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: {{ labels|safe }},
+            datasets: [{
+                label: 'Revenue (R)',
+                data: {{ revenue_data|safe }},
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R ' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Orders Chart
+    const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+    new Chart(ordersCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ labels|safe }},
+            datasets: [{
+                label: 'Number of Orders',
+                data: {{ orders_data|safe }},
+                backgroundColor: '#0d6efd',
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+    
+    // Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Processing', 'In Transit', 'Delivered', 'Cancelled'],
+            datasets: [{
+                data: [
+                    {{ status_distribution.get('pending', 0) }},
+                    {{ status_distribution.get('preparing', 0) + status_distribution.get('confirmed', 0) }},
+                    {{ status_distribution.get('in_transit', 0) }},
+                    {{ status_distribution.get('delivered', 0) }},
+                    {{ status_distribution.get('cancelled', 0) }}
+                ],
+                backgroundColor: ['#ffc107', '#fd7e14', '#0dcaf0', '#198754', '#dc3545'],
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Hourly Distribution Chart
+    const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+    new Chart(hourlyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ hourly_data|map(attribute='hour')|list|safe }},
+            datasets: [{
+                label: 'Orders',
+                data: {{ hourly_data|map(attribute='count')|list|safe }},
+                borderColor: '#6f42c1',
+                backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#6f42c1',
+                pointBorderColor: '#fff',
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Hour of Day (24-hour format)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Number of Orders'
+                    },
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

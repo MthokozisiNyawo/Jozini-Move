@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">About Jozini Move</h1>
+            <p class="lead">Connecting local businesses with customers through fast, reliable delivery services.</p>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-md-6" data-aos="fade-right">
+            <h3>Our Story</h3>
+            <p>Jozini Move was founded with a simple mission: to make local delivery fast, affordable, and reliable for everyone in Jozini and surrounding areas. We saw a need for a platform that connects local shops with customers who want the convenience of home delivery.</p>
+            <p>Starting with just a few shops in Jozini Town Centre, we've grown to serve thousands of customers across multiple delivery zones. Our platform empowers local businesses to reach more customers while providing drivers with flexible earning opportunities.</p>
+        </div>
+        <div class="col-md-6" data-aos="fade-left">
+            <img src="{{ url_for('static', filename='img/about-story.svg') }}" alt="Our Story" class="img-fluid">
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-md-6 order-md-2" data-aos="fade-left">
+            <h3>Our Mission</h3>
+            <p>To revolutionize local commerce in Jozini by providing a seamless delivery platform that benefits everyone - customers get convenience, shops get more sales, and drivers get reliable income.</p>
+            <p>We're committed to supporting local businesses and creating economic opportunities in our community. Every delivery helps strengthen our local economy and brings us closer together.</p>
+        </div>
+        <div class="col-md-6 order-md-1" data-aos="fade-right">
+            <img src="{{ url_for('static', filename='img/about-mission.svg') }}" alt="Our Mission" class="img-fluid">
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h3>What Makes Us Different</h3>
+        </div>
+        <div class="col-md-4 text-center mb-4" data-aos="zoom-in">
+            <i class="fas fa-bolt fa-3x text-primary mb-3"></i>
+            <h5>Fast Delivery</h5>
+            <p>Average delivery time of 30-45 minutes across all zones</p>
+        </div>
+        <div class="col-md-4 text-center mb-4" data-aos="zoom-in" data-aos-delay="100">
+            <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+            <h5>Secure Payments</h5>
+            <p>Multiple payment options with secure processing</p>
+        </div>
+        <div class="col-md-4 text-center mb-4" data-aos="zoom-in" data-aos-delay="200">
+            <i class="fas fa-map-marked-alt fa-3x text-primary mb-3"></i>
+            <h5>Real-time Tracking</h5>
+            <p>Track your order from shop to doorstep</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12 text-center">
+            <h3 class="mb-4">Join Our Growing Community</h3>
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>Sign Up as Customer
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-truck me-2"></i>Become a Driver
+                </a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success btn-lg">
+                    <i class="fas fa-store me-2"></i>Register Your Shop
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

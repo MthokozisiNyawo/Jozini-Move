@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h4 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Welcome Back!</h4>
+                </div>
+                <div class="card-body p-5">
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                {{ form.phone(class="form-control form-control-lg", placeholder="0712345678") }}
+                            </div>
+                            {% for error in form.phone.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                {{ form.password(class="form-control form-control-lg", placeholder="Enter your password") }}
+                            </div>
+                            {% for error in form.password.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-4 form-check">
+                            {{ form.remember(class="form-check-input") }}
+                            <label class="form-check-label" for="remember">
+                                Remember Me
+                            </label>
+                            <a href="{{ url_for('auth.forgot_password') }}" class="float-end text-decoration-none">Forgot Password?</a>
+                        </div>
+                        
+                        {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Don't have an account? 
+                            <a href="{{ url_for('auth.register') }}" class="text-decoration-none">Sign Up</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Demo Accounts -->
+            <div class="card mt-4 border-0 bg-light">
+                <div class="card-body text-center">
+                    <small class="text-muted">Demo Accounts:</small><br>
+                    <small>Customer: 0721234567 / password123</small><br>
+                    <small>Driver: 0839876543 / password123</small><br>
+                    <small>Shop Owner: 0711111111 / password123</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

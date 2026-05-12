@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Profile Picture</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if current_user.profile_image %}
+                        <img src="{{ url_for('static', filename='uploads/profile/' + current_user.profile_image) }}" 
+                             class="rounded-circle mb-3" width="150" height="150" style="object-fit: cover;">
+                    {% else %}
+                        <i class="fas fa-user-circle fa-6x text-muted mb-3"></i>
+                    {% endif %}
+                    <h5>{{ current_user.name }}</h5>
+                    <p class="text-muted">
+                        <span class="badge bg-{{ 'info' if current_user.user_type == 'customer' else 'warning' if current_user.user_type == 'driver' else 'success' }}">
+                            {{ current_user.user_type|title }}
+                        </span>
+                    </p>
+                    <div class="mt-3">
+                        <div class="text-warning">
+                            {% for i in range(current_user.rating|int) %}★{% endfor %}
+                            {% for i in range(5 - current_user.rating|int) %}☆{% endfor %}
+                            <small class="text-muted">({{ current_user.total_ratings }} reviews)</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted">Member Since</label>
+                        <p class="mb-0 fw-bold">{{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted">Last Login</label>
+                        <p class="mb-0 fw-bold">{{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else 'Never' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-muted">Account Status</label>
+                        <p class="mb-0">
+                            {% if current_user.is_verified %}
+                                <span class="badge bg-success">Verified</span>
+                            {% else %}
+                                <span class="badge bg-warning">Pending Verification</span>
+                            {% endif %}
+                            {% if current_user.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            {{ form.name(class="form-control") }}
+                            {% for error in form.name.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            {{ form.email(class="form-control") }}
+                            {% for error in form.email.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            {{ form.address(class="form-control", rows="3") }}
+                            {% for error in form.address.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="profile_image" class="form-label">Profile Picture</label>
+                            {{ form.profile_image(class="form-control") }}
+                            <small class="text-muted">Accepted formats: JPG, PNG, GIF. Max 2MB</small>
+                            {% for error in form.profile_image.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-key me-2"></i>Change Password
+                        </a>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Driver/Shop Owner Specific Info -->
+            {% if current_user.is_driver() %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="fas fa-motorcycle me-2"></i>Driver Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="text-muted">Vehicle Type</label>
+                            <p class="fw-bold">{{ current_user.vehicle or 'Not specified' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted">Total Deliveries</label>
+                            <p class="fw-bold">{{ total_deliveries|default(0) }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted">Total Earnings</label>
+                            <p class="fw-bold text-success">{{ format_currency(total_earnings|default(0)) }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted">Rating</label>
+                            <p class="fw-bold">{{ "%.1f"|format(current_user.rating) }} / 5.0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if current_user.is_shop_owner() %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-store me-2"></i>Your Shops</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for shop in current_user.shops.all() %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ shop.shop_name }}</h6>
+                                        <small class="text-muted">{{ shop.category|title }} - {{ shop.status|title }}</small>
+                                    </div>
+                                    <a href="{{ url_for('shop.shop_detail', shop_id=shop.id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No shops registered yet.</p>
+                            <a href="{{ url_for('shop.register_shop') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Register a Shop
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

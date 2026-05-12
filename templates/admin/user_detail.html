@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}User Details - {{ user.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">User Profile</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if user.profile_image %}
+                        <img src="{{ url_for('static', filename='uploads/profile/' + user.profile_image) }}" class="rounded-circle mb-3" width="120" height="120" style="object-fit: cover;">
+                    {% else %}
+                        <i class="fas fa-user-circle fa-5x text-muted mb-3"></i>
+                    {% endif %}
+                    <h4>{{ user.name }}</h4>
+                    <p class="text-muted">
+                        <span class="badge bg-{{ 'info' if user.user_type == 'customer' else 'warning' if user.user_type == 'driver' else 'success' if user.user_type == 'shop_owner' else 'danger' }}">
+                            {{ user.user_type|title }}
+                        </span>
+                    </p>
+                    <hr>
+                    <div class="text-start">
+                        <p><i class="fas fa-phone me-2"></i> {{ user.phone }}</p>
+                        <p><i class="fas fa-envelope me-2"></i> {{ user.email }}</p>
+                        <p><i class="fas fa-map-marker-alt me-2"></i> {{ user.address or 'Not provided' }}</p>
+                        <p><i class="fas fa-calendar me-2"></i> Joined: {{ user.created_at.strftime('%Y-%m-%d') }}</p>
+                        <p><i class="fas fa-star me-2"></i> Rating: {{ "%.1f"|format(user.rating) }} / 5</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- User Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Orders</h6>
+                            <h3 class="mb-0">{{ total_orders }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Spent</h6>
+                            <h5 class="mb-0">{{ format_currency(total_spent) }}</h5>
+                        </div>
+                    </div>
+                </div>
+                {% if user.is_driver() %}
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Deliveries</h6>
+                            <h3 class="mb-0">{{ deliveries }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Earnings</h6>
+                            <h5 class="mb-0">{{ format_currency(earnings) }}</h5>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% if user.is_shop_owner() %}
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Shops</h6>
+                            <h3 class="mb-0">{{ shops|length }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Shop Orders</h6>
+                            <h3 class="mb-0">{{ shop_orders }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Shop Revenue</h6>
+                            <h5 class="mb-0">{{ format_currency(shop_revenue) }}</h5>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Shops Owned -->
+            {% if user.is_shop_owner() and shops %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Shops Owned</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Shop Name</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shop in shops %}
+                                <tr>
+                                    <td>{{ shop.shop_name }}</td>
+                                    <td>{{ shop.category|title }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if shop.status == 'active' else 'warning' if shop.status == 'pending' else 'danger' }}">
+                                            {{ shop.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('shop.shop_detail', shop_id=shop.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Recent Orders -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">Recent Orders</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Shop</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>{{ order.order_number }}</td>
+                                    <td>{{ order.shop.shop_name if order.shop else 'N/A' }}</td>
+                                    <td>{{ format_currency(order.grand_total) }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ order.order_status }}">
+                                            {{ order.order_status|replace('_', ' ')|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('order.order_detail', order_number=order.order_number) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No orders yet</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

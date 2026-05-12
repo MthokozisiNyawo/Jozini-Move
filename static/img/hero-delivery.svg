@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400">
+    <rect width="500" height="400" fill="#f0f4f8"/>
+    <circle cx="250" cy="200" r="150" fill="#e0e7ff"/>
+    <path d="M200,250 L300,250 L320,280 L180,280 Z" fill="#0d6efd"/>
+    <circle cx="200" cy="290" r="20" fill="#333"/>
+    <circle cx="300" cy="290" r="20" fill="#333"/>
+    <rect x="230" y="220" width="40" height="30" fill="#fff" rx="5"/>
+    <path d="M250,220 L250,250" stroke="#333" stroke-width="2"/>
+    <path d="M230,250 L270,250" stroke="#333" stroke-width="2"/>
+    <text x="250" y="350" text-anchor="middle" fill="#666" font-size="14">Fast Delivery</text>
+</svg>

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Register Your Shop - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h4 class="mb-0"><i class="fas fa-store me-2"></i>Register Your Shop</h4>
+                    <p class="mb-0 mt-2">Start selling on Jozini Move today!</p>
+                </div>
+                <div class="card-body p-5">
+                    <form method="POST" action="" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="shop_name" class="form-label">Shop Name</label>
+                                {{ form.shop_name(class="form-control", placeholder="Enter your shop name") }}
+                                {% for error in form.shop_name.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                {{ form.category(class="form-select") }}
+                                {% for error in form.category.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Shop Address</label>
+                            {{ form.address(class="form-control", rows="2", placeholder="Full address of your shop") }}
+                            {% for error in form.address.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Shop Phone</label>
+                                {{ form.phone(class="form-control", placeholder="0712345678") }}
+                                {% for error in form.phone.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Shop Email</label>
+                                {{ form.email(class="form-control", placeholder="shop@example.com") }}
+                                {% for error in form.email.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Shop Description</label>
+                            {{ form.description(class="form-control", rows="3", placeholder="Tell customers about your shop") }}
+                            {% for error in form.description.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="opening_hours" class="form-label">Opening Hours</label>
+                                {{ form.opening_hours(class="form-control", placeholder="e.g., 8:00 AM") }}
+                                {% for error in form.opening_hours.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="closing_hours" class="form-label">Closing Hours</label>
+                                {{ form.closing_hours(class="form-control", placeholder="e.g., 8:00 PM") }}
+                                {% for error in form.closing_hours.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="delivery_fee" class="form-label">Delivery Fee (R)</label>
+                                {{ form.delivery_fee(class="form-control", placeholder="20.00") }}
+                                {% for error in form.delivery_fee.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="min_order" class="form-label">Minimum Order (R)</label>
+                                {{ form.min_order(class="form-control", placeholder="0.00") }}
+                                {% for error in form.min_order.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="logo" class="form-label">Shop Logo</label>
+                            {{ form.logo(class="form-control") }}
+                            <small class="text-muted">Recommended: Square image, max 2MB</small>
+                            {% for error in form.logo.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Your shop will be reviewed by our team before going live. This usually takes 24-48 hours.
+                        </div>
+                        
+                        {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

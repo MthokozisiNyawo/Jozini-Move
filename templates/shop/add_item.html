@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Add Menu Item - {{ shop.shop_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .image-preview {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 2px solid #dee2e6;
+        margin-top: 10px;
+    }
+    .preview-container {
+        display: inline-block;
+        position: relative;
+    }
+    .remove-image {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Add Menu Item - {{ shop.shop_name }}</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Item Name</label>
+                            {{ form.name(class="form-control", placeholder="e.g., Chicken Burger") }}
+                            {% for error in form.name.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            {{ form.description(class="form-control", rows="3", placeholder="Describe your item...") }}
+                            {% for error in form.description.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="price" class="form-label">Price (R)</label>
+                                {{ form.price(class="form-control", placeholder="0.00") }}
+                                {% for error in form.price.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                {{ form.category(class="form-control", placeholder="e.g., Burgers, Drinks, Sides") }}
+                                {% for error in form.category.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="preparation_time" class="form-label">Preparation Time (minutes)</label>
+                                {{ form.preparation_time(class="form-control", placeholder="15") }}
+                                {% for error in form.preparation_time.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="stock_quantity" class="form-label">Stock Quantity</label>
+                                {{ form.stock_quantity(class="form-control", placeholder="-1 for unlimited") }}
+                                <small class="text-muted">Use -1 for unlimited stock</small>
+                                {% for error in form.stock_quantity.errors %}
+                                    <small class="text-danger">{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Item Image</label>
+                            <div class="image-upload-area">
+                                {{ form.image(class="form-control", accept="image/*", id="itemImage") }}
+                                <small class="text-muted">Recommended: Square image, max 2MB. JPG, PNG, GIF</small>
+                                <div id="imagePreviewContainer" class="mt-2" style="display: none;">
+                                    <div class="preview-container">
+                                        <img id="imagePreview" class="image-preview" src="#" alt="Preview">
+                                        <span class="remove-image" onclick="removeImage()">×</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% for error in form.image.errors %}
+                                <small class="text-danger">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    {{ form.available(class="form-check-input") }}
+                                    <label class="form-check-label" for="available">
+                                        Available for ordering
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    {{ form.is_featured(class="form-check-input") }}
+                                    <label class="form-check-label" for="is_featured">
+                                        Featured item (shows on homepage)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('shop.shop_detail', shop_id=shop.id) }}" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function previewImage(input) {
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const preview = document.getElementById('imagePreview');
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                previewContainer.style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    function removeImage() {
+        document.getElementById('itemImage').value = '';
+        document.getElementById('imagePreviewContainer').style.display = 'none';
+        document.getElementById('imagePreview').src = '#';
+    }
+    
+    document.getElementById('itemImage').addEventListener('change', function() {
+        previewImage(this);
+    });
+</script>
+{% endblock %}

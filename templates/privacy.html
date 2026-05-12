@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy - Jozini Move{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Privacy Policy</h4>
+                    <p class="mb-0 mt-2 small">Last updated: January 1, 2024</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Your privacy is important to us. This policy explains how we collect, use, and protect your information.
+                    </div>
+                    
+                    <h5>1. Information We Collect</h5>
+                    <p>We collect the following types of information:</p>
+                    <ul>
+                        <li><strong>Personal Information:</strong> Name, phone number, email address, delivery address</li>
+                        <li><strong>Account Information:</strong> Username, password, account preferences</li>
+                        <li><strong>Order Information:</strong> Items purchased, order history, delivery details</li>
+                        <li><strong>Payment Information:</strong> Payment method, transaction details (we do not store full card numbers)</li>
+                        <li><strong>Device Information:</strong> IP address, browser type, device type</li>
+                        <li><strong>Location Information:</strong> Delivery address, GPS data (with permission)</li>
+                    </ul>
+                    
+                    <h5>2. How We Use Your Information</h5>
+                    <p>We use your information to:</p>
+                    <ul>
+                        <li>Process and deliver your orders</li>
+                        <li>Communicate with you about orders and updates</li>
+                        <li>Improve our services and user experience</li>
+                        <li>Process payments and prevent fraud</li>
+                        <li>Send promotional offers (with your consent)</li>
+                        <li>Comply with legal obligations</li>
+                    </ul>
+                    
+                    <h5>3. Information Sharing</h5>
+                    <p>We share your information with:</p>
+                    <ul>
+                        <li><strong>Shops:</strong> To fulfill your orders (name, address, order details)</li>
+                        <li><strong>Drivers:</strong> To deliver your order (name, address, phone number)</li>
+                        <li><strong>Payment Processors:</strong> To process transactions</li>
+                        <li><strong>Service Providers:</strong> Who help us operate the platform</li>
+                        <li><strong>Law Enforcement:</strong> When required by law</li>
+                    </ul>
+                    <p>We never sell your personal information to third parties.</p>
+                    
+                    <h5>4. Data Security</h5>
+                    <p>We protect your information with:</p>
+                    <ul>
+                        <li>Encryption for sensitive data</li>
+                        <li>Secure servers and firewalls</li>
+                        <li>Regular security audits</li>
+                        <li>Access controls and authentication</li>
+                    </ul>
+                    
+                    <h5>5. Your Rights</h5>
+                    <p>You have the right to:</p>
+                    <ul>
+                        <li>Access your personal information</li>
+                        <li>Correct inaccurate information</li>
+                        <li>Request deletion of your data</li>
+                        <li>Opt-out of marketing communications</li>
+                        <li>Export your data</li>
+                    </ul>
+                    <p>To exercise these rights, contact us at privacy@jozinimove.co.za</p>
+                    
+                    <h5>6. Cookies and Tracking</h5>
+                    <p>We use cookies to:</p>
+                    <ul>
+                        <li>Remember your login status</li>
+                        <li>Track your shopping cart</li>
+                        <li>Analyze site usage and improve performance</li>
+                        <li>Personalize your experience</li>
+                    </ul>
+                    <p>You can disable cookies in your browser settings, but some features may not work properly.</p>
+                    
+                    <h5>7. Children's Privacy</h5>
+                    <p>Our services are not intended for children under 18. We do not knowingly collect information from children under 18.</p>
+                    
+                    <h5>8. Data Retention</h5>
+                    <p>We retain your information:</p>
+                    <ul>
+                        <li>As long as your account is active</li>
+                        <li>As needed to provide our services</li>
+                        <li>To comply with legal obligations</li>
+                        <li>For legitimate business purposes</li>
+                    </ul>
+                    
+                    <h5>9. International Data Transfers</h5>
+                    <p>Your information may be transferred to and processed in countries other than your own. We ensure appropriate safeguards are in place.</p>
+                    
+                    <h5>10. Changes to This Policy</h5>
+                    <p>We may update this privacy policy periodically. We will notify you of significant changes via email or platform notification.</p>
+                    
+                    <h5>11. Contact Us</h5>
+                    <p>For privacy-related questions or concerns:</p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-envelope me-2"></i> privacy@jozinimove.co.za</li>
+                        <li><i class="fas fa-phone me-2"></i> +27 71 234 5678</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i> Jozini, KwaZulu-Natal, South Africa</li>
+                    </ul>
+                    
+                    <div class="alert alert-success mt-4">
+                        <i class="fas fa-check-circle me-2"></i>
+                        We are committed to protecting your privacy and handling your data responsibly.
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="text-center">
+                        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

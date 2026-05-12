@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}My Earnings - Jozini Move{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #0d6efd, #10b981);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-top: 5px;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .month-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+    .month-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .month-card.selected {
+        border: 2px solid #10b981;
+        background: #f0fdf4;
+    }
+    .earning-row {
+        border-left: 4px solid #10b981;
+        transition: all 0.3s ease;
+    }
+    .earning-row:hover {
+        transform: translateX(5px);
+        background-color: #f8f9fa;
+    }
+    .btn-export {
+        transition: all 0.3s ease;
+    }
+    .btn-export:hover {
+        transform: translateY(-2px);
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .table th, .table td {
+        vertical-align: middle;
+        padding: 12px;
+    }
+    .table thead th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    @media print {
+        .no-print, .filter-bar, .btn-export {
+            display: none !important;
+        }
+        .stat-card {
+            break-inside: avoid;
+        }
+        .chart-container {
+            break-inside: avoid;
+        }
+        .table-responsive {
+            overflow: visible;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                <h2 class="mb-2 mb-md-0">
+                    <i class="fas fa-chart-line me-2"></i>My Earnings
+                </h2>
+                <div class="dropdown no-print">
+                    <button class="btn btn-success dropdown-toggle btn-export" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-2"></i>Export Report
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="window.print(); return false;">
+                                <i class="fas fa-print me-2"></i>Print Report
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-sm-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_deliveries }}</div>
+                        <div class="stat-label">Total Deliveries</div>
+                    </div>
+                </div>
+                <div class="col-sm-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ format_currency(total_earnings) }}</div>
+                        <div class="stat-label">Total Earnings</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Earnings Chart -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Earnings Trend (Last 6 Months)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="earningsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Weekly Earnings -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-calendar-week me-2"></i>This Week's Earnings</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Date</th>
+                                    <th>Deliveries</th>
+                                    <th>Earnings</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day in weekly_earnings %}
+                                <tr>
+                                    <td><strong>{{ day.date }}</strong></td>
+                                    <td>{{ day.full_date }}</td>
+                                    <td>{{ day.deliveries }}</td>
+                                    <td class="text-success fw-bold">{{ format_currency(day.earnings) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-secondary">
+                                <tr class="fw-bold">
+                                    <td>Total</td>
+                                    <td></td>
+                                    <td>{{ weekly_earnings|sum(attribute='deliveries') }}</td>
+                                    <td class="text-success">{{ format_currency(weekly_earnings|sum(attribute='earnings')) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Monthly Earnings Summary -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Monthly Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for month in monthly_data[:6] %}
+                        <div class="col-md-4 col-lg-3 mb-3">
+                            <div class="card month-card text-center h-100 {% if selected_month_data and selected_month_data.year == month.year and selected_month_data.month == month.month %}selected{% endif %}"
+                                 onclick="window.location.href='?year={{ month.year }}&month={{ month.month }}'">
+                                <div class="card-body">
+                                    <h6 class="mb-2">{{ month.month_name }}</h6>
+                                    <div class="mb-2">
+                                        <span class="badge bg-primary">{{ month.deliveries }} deliveries</span>
+                                    </div>
+                                    <div class="text-success fw-bold fs-5">
+                                        {{ format_currency(month.earnings) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Monthly Breakdown (Selected Month) -->
+            {% if selected_month_data %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        {{ selected_month_data.month_name }} - Detailed Breakdown
+                        <span class="badge bg-light text-dark ms-2">{{ selected_month_data.deliveries }} deliveries</span>
+                        <span class="badge bg-light text-dark ms-2">{{ format_currency(selected_month_data.earnings) }} earned</span>
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if daily_breakdown %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Date</th>
+                                    <th>Delivery Fee</th>
+                                    <th>Your Earnings</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in daily_breakdown %}
+                                <tr class="earning-row">
+                                    <td><strong>{{ order.order_number }}</strong></td>
+                                    <td>{{ order.date }}</td>
+                                    <td>{{ format_currency(order.delivery_fee) }}</td>
+                                    <td class="text-success fw-bold">{{ format_currency(order.earnings) }}</td>
+                                    <td>
+                                        <a href="{{ url_for('driver.order_details', order_number=order.order_number) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-secondary">
+                                <tr class="fw-bold">
+                                    <td colspan="2">Total</td>
+                                    <td>{{ format_currency(daily_breakdown|sum(attribute='delivery_fee')) }}</td>
+                                    <td class="text-success">{{ format_currency(daily_breakdown|sum(attribute='earnings')) }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-truck fa-3x text-muted mb-2"></i>
+                        <p>No deliveries in {{ selected_month_data.month_name }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- All Months Summary Table -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-table me-2"></i>All Months Summary</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Deliveries</th>
+                                    <th>Total Fees</th>
+                                    <th>Your Earnings</th>
+                                    <th>Average per Delivery</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for month in monthly_data %}
+                                <tr>
+                                    <td><strong>{{ month.month_name }}</strong></td>
+                                    <td>{{ month.deliveries }}</td>
+                                    <td>{{ format_currency(month.total_fees) }}</td>
+                                    <td class="text-success fw-bold">{{ format_currency(month.earnings) }}</td>
+                                    <td>
+                                        {% if month.deliveries > 0 %}
+                                            {{ format_currency(month.earnings / month.deliveries) }}
+                                        {% else %}
+                                            R 0.00
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="?year={{ month.year }}&month={{ month.month }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-chart-line"></i> View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-chart-line fa-3x text-muted mb-2"></i>
+                                        <p>No earnings data available yet</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-dark">
+                                <tr class="fw-bold">
+                                    <td>Total</td>
+                                    <td>{{ monthly_data|sum(attribute='deliveries') }}</td>
+                                    <td>{{ format_currency(monthly_data|sum(attribute='total_fees')) }}</td>
+                                    <td class="text-success">{{ format_currency(monthly_data|sum(attribute='earnings')) }}</td>
+                                    <td>
+                                        {% if monthly_data|sum(attribute='deliveries') > 0 %}
+                                            {{ format_currency(monthly_data|sum(attribute='earnings') / monthly_data|sum(attribute='deliveries')) }}
+                                        {% else %}
+                                            R 0.00
+                                        {% endif %}
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Earnings Chart
+    const ctx = document.getElementById('earningsChart').getContext('2d');
+    
+    // Prepare data
+    var chartMonths = {{ chart_months|safe }};
+    var chartEarnings = {{ chart_earnings|safe }};
+    var chartDeliveries = {{ chart_deliveries|safe }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartMonths,
+            datasets: [
+                {
+                    label: 'Earnings (R)',
+                    data: chartEarnings,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Deliveries',
+                    data: chartDeliveries,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            let value = context.parsed.y;
+                            if (context.dataset.label === 'Earnings (R)') {
+                                return label + ': R ' + value.toFixed(2);
+                            }
+                            return label + ': ' + value;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Earnings (R)'
+                    },
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R ' + value.toLocaleString();
+                        }
+                    }
+                },
+                y1: {
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Number of Deliveries'
+                    },
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value;
+                        }
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

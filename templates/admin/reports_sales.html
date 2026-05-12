@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Report - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #0d6efd, #10b981);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-top: 5px;
+    }
+    .chart-container {
+        position: relative;
+        height: 350px;
+        margin-bottom: 20px;
+    }
+    .filter-bar {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .table-img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .btn-export {
+        transition: all 0.3s ease;
+    }
+    .btn-export:hover {
+        transform: translateY(-2px);
+    }
+    .table td, .table th {
+        vertical-align: middle;
+        padding: 12px;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .sales-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .table-dark th {
+        background-color: #1a1a2e;
+        color: white;
+    }
+    .table-secondary th {
+        background-color: #e9ecef;
+    }
+    
+    @media print {
+        .filter-bar, .btn-export, .no-print {
+            display: none !important;
+        }
+        .stat-card {
+            break-inside: avoid;
+        }
+        .chart-container {
+            break-inside: avoid;
+        }
+        .table-dark th {
+            background-color: #ddd !important;
+            color: #000 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                <h2 class="mb-2 mb-md-0">
+                    <i class="fas fa-chart-line me-2"></i>Sales Report
+                </h2>
+                <div class="dropdown no-print">
+                    <button class="btn btn-success dropdown-toggle btn-export" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-2"></i>Export Report
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="window.print(); return false;">
+                                <i class="fas fa-print me-2"></i>Print Report
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Filter Bar -->
+            <div class="filter-bar no-print">
+                <form method="GET" class="row g-3 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label mb-0">Period</label>
+                        <select name="period" class="form-select" onchange="this.form.submit()">
+                            <option value="daily" {% if period == 'daily' %}selected{% endif %}>Daily</option>
+                            <option value="weekly" {% if period == 'weekly' %}selected{% endif %}>Weekly</option>
+                            <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Monthly</option>
+                            <option value="yearly" {% if period == 'yearly' %}selected{% endif %}>Yearly</option>
+                            <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-0">From Date</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-0">To Date</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i>Generate Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_orders|default(0) }}</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ format_currency(total_revenue|default(0)) }}</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ format_currency(avg_order_value|default(0)) }}</div>
+                        <div class="stat-label">Average Order Value</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ format_currency(platform_revenue|default(0)) }}</div>
+                        <div class="stat-label">Platform Revenue</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts -->
+            <div class="row mb-4">
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Revenue Trend</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Order Trend</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="ordersChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sales Data Table -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-table me-2"></i>Sales Breakdown</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Orders</th>
+                                    <th>Revenue</th>
+                                    <th>Avg Order</th>
+                                    <th>Delivery Fees</th>
+                                    <th>Service Fees</th>
+                                    <th>Platform Commission</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in sales_data %}
+                                <tr>
+                                    <td><strong>{{ data.date }}</strong></td>
+                                    <td>{{ data.orders }}</td>
+                                    <td>{{ format_currency(data.revenue) }}</td>
+                                    <td>{{ format_currency(data.avg_order) }}</td>
+                                    <td>{{ format_currency(data.total_delivery_fees) }}</td>
+                                    <td>{{ format_currency(data.total_service_fees) }}</td>
+                                    <td>{{ format_currency(data.total_delivery_fees * 0.3) }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <i class="fas fa-chart-line fa-3x text-muted mb-2"></i>
+                                        <p class="mb-0">No sales data available for the selected period</p>
+                                        <small class="text-muted">Try adjusting your filter criteria</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-secondary">
+                                <tr class="fw-bold">
+                                    <td><strong>TOTAL</strong></td>
+                                    <td><strong>{{ total_orders|default(0) }}</strong></td>
+                                    <td><strong>{{ format_currency(total_revenue|default(0)) }}</strong></td>
+                                    <td><strong>{{ format_currency(avg_order_value|default(0)) }}</strong></td>
+                                    <td><strong>{{ format_currency(total_delivery_fees|default(0)) }}</strong></td>
+                                    <td><strong>{{ format_currency(total_service_fees|default(0)) }}</strong></td>
+                                    <td><strong>{{ format_currency(platform_revenue|default(0)) }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Shops and Top Customers -->
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-store me-2"></i>Top Performing Shops</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-bordered mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Shop</th>
+                                            <th>Orders</th>
+                                            <th>Revenue</th>
+                                            <th>% of Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for shop in top_shops %}
+                                        <tr>
+                                            <td>
+                                                {% if shop.logo %}
+                                                    <img src="{{ url_for('static', filename='uploads/logos/' + shop.logo) }}" class="table-img me-2">
+                                                {% endif %}
+                                                <strong>{{ shop.shop_name }}</strong>
+                                            </td>
+                                            <td>{{ shop.orders }}</td>
+                                            <td class="text-success fw-bold">{{ format_currency(shop.revenue|default(0)) }}</td>
+                                            <td>
+                                                {% if total_revenue > 0 %}
+                                                    {{ "%.1f"|format(shop.revenue / total_revenue * 100) }}%
+                                                {% else %}
+                                                    0%
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5">
+                                                <i class="fas fa-store fa-3x text-muted mb-2"></i>
+                                                <p class="mb-0">No shop data available</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot class="table-secondary">
+                                        <tr class="fw-bold">
+                                            <td><strong>TOTAL</strong></td>
+                                            <td><strong>{{ top_shops|sum(attribute='orders') }}</strong></td>
+                                            <td><strong>{{ format_currency(top_shops|sum(attribute='revenue')) }}</strong></td>
+                                            <td><strong>100%</strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-users me-2"></i>Top Customers</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-bordered mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Customer</th>
+                                            <th>Orders</th>
+                                            <th>Total Spent</th>
+                                            <th>% of Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for customer in top_customers %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ customer.name }}</strong><br>
+                                                <small class="text-muted">{{ customer.email }}</small>
+                                            </td>
+                                            <td>{{ customer.orders }}</td>
+                                            <td class="text-success fw-bold">{{ format_currency(customer.spent|default(0)) }}</td>
+                                            <td>
+                                                {% if total_revenue > 0 %}
+                                                    {{ "%.1f"|format(customer.spent / total_revenue * 100) }}%
+                                                {% else %}
+                                                    0%
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5">
+                                                <i class="fas fa-users fa-3x text-muted mb-2"></i>
+                                                <p class="mb-0">No customer data available</p>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot class="table-secondary">
+                                        <tr class="fw-bold">
+                                            <td><strong>TOTAL</strong></td>
+                                            <td><strong>{{ top_customers|sum(attribute='orders') }}</strong></td>
+                                            <td><strong>{{ format_currency(top_customers|sum(attribute='spent')) }}</strong></td>
+                                            <td><strong>100%</strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_labels|safe }},
+                datasets: [{
+                    label: 'Revenue (R)',
+                    data: {{ chart_revenue|safe }},
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R ' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Orders Chart
+    const ordersCtx = document.getElementById('ordersChart');
+    if (ordersCtx) {
+        new Chart(ordersCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_labels|safe }},
+                datasets: [{
+                    label: 'Number of Orders',
+                    data: {{ chart_orders|safe }},
+                    backgroundColor: '#0d6efd',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
